@@ -1,6 +1,6 @@
 # ebscopy.py
 
-# Version 0.01
+# Version 0.0.1
 #
 # To Do:
 # define connection object
@@ -58,11 +58,13 @@ class Connection:
   #  profile
   #  org
   #  guest value
+    pass
     
   # Internal method to generate a URL
   def __build_url(self, **kwargs):
   # /edsapi/rest/
   # /authservice/rest/UIDAuth 
+    pass
 
   # Internal method to actually connect and get data
   def __get(self, url, data):
@@ -72,6 +74,7 @@ class Connection:
   # 400 error, invalid session token
   #  Receive JSON:
   #    {"DetailedErrorDescription":"Invalid Session Token. Please generate a new one.","ErrorDescription":"Session Token Invalid","ErrorNumber":"109"}
+    pass
 
   def connect(self):
   # Do UIDAuth
@@ -114,6 +117,7 @@ class Connection:
   # Receive JSON with:
   #  Lots of info
   # Need it to do searches correctly?
+    pass
 
   # Do a search
   def search(self, query):
@@ -130,8 +134,10 @@ class Connection:
   #  expander
 
   # GET /edsapi/rest/Search?query=[QUERY]&searchmode=[bool|all|any|smart]&resultsperpage=20&pagenumber=1&sort=relevance&highlight=y&includefacets=y&view=brief&expander=fulltext Http/1.1 
+    pass
 
 
 
 
 
+#EOF
