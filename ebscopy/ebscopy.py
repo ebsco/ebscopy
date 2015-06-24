@@ -42,10 +42,11 @@
 #	POST SearchCriteria  info
 #
 
-import json		# Need this for managing input and output
-import os		# Need this to get ENV variables with auth info
-import urllib2
-import requests
+import json					# Manage data
+import os					# Get ENV variables with auth info
+#import urllib2
+import requests					# Does the heavy HTTP lifting
+from datetime import datetime, timedelta	# Monitor authentication timeout
 from config import *
 
 
@@ -98,14 +99,14 @@ class Connection:
       print self.org
       print self.guest
 
-    pass
     
   # Internal method to generate an HTTP request 
   def __request(self, method, data):
-    valid_methods		= frozenset(CreateSession, Info, Search, Retrieve, EndSession, UIDAuth, SearchCriteria)
+    valid_methods		= frozenset(["CreateSession", "Info", "Search", "Retrieve", "EndSession", "UIDAuth", "SearchCriteria"])
     if method not in valid_methods:
       raise ValueError
 
+    data_json			= json.dumps(data)
     base_host			= "https://eds-api.ebscohost.com"
     base_path			= ""
     base_url			= ""
@@ -118,27 +119,33 @@ class Connection:
 
     full_url			= base_host + base_path + method
 
-    headers			= {'Content-Type'='application/json', 'Accept'='application/json'}
+    headers			= {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
-    if self.auth_token:
+    #if self.auth_token:
+    try:
       headers['x-authenticationToken']	= self.auth_token
-    elif method is not "UIDAuth":
-      raise ValueError
+    #elif method is not "UIDAuth":
+    except:
+      if method is not "UIDAuth":
+        raise ValueError
       
-    if self.session_token:
+    #if self.session_token:
+    try:
       headers['x-sessionToken']		= self.session_token
-    elif method not in ("UIDAuth", "CreateSession"):
-      raise ValueError
+    except:
+      if method not in ("UIDAuth", "CreateSession"):
+        raise ValueError
 
-    r				= requests.post(full_url, data=data, headers=headers)
+    r				= requests.post(full_url, data=data_json, headers=headers)
     code			= r.status_code
     if code is not "200":
       if code is "400" and method not in ("UIDAuth", "CreateSession"):
+        if Mode.debug: print "Session died!?!"
         #TODO: Probably a timeout issue, need to recover
   	# 400 error, invalid session token
   	#  Receive JSON:
   	#    {"DetailedErrorDescription":"Invalid Session Token. Please generate a new one.","ErrorDescription":"Session Token Invalid","ErrorNumber":"109"}
-      else
+      else:
         r.raise_for_status()
 
     # This should be a dict now...?
@@ -160,10 +167,17 @@ class Connection:
   #  AuthToken
   #  AuthTimeout
 
-  # Save AuthToken
-  #auth_token = valueof('AuthToken')
-  # Save Timeout time
-  #auth_timeout_time = valueof('AuthTimeout') + date.now
+    auth_data			= {
+					"UserId":	self.user_id,
+					"Password":	self.password,
+					"InterfaceId":	self.interface_id
+			  	}
+    auth_response		= self.__request("UIDAuth", auth_data)
+    if Mode.debug: print auth_response
+
+    self.auth_token		= auth_response["AuthToken"]
+    self.auth_timeout		= auth_response["AuthTimeout"]
+    self.auth_timeout_time	= datetime.now() + timedelta(seconds=int(self.auth_timeout))
 
   # Do CreateSession
   # GET /edsapi/rest/CreateSession?profile=[PROFILE]&org=[ORG]&guest=[Y/N] Http/1.1
@@ -174,8 +188,17 @@ class Connection:
   # Receive JSON with:
   #  SessionToken
 
-  # Save SessionToken
-  #session_token = valueof('SessionToken')
+    create_data			= {
+					"Profile":	self.profile,
+					"Guest":	self.guest,
+					"Org":		self.org
+				}
+
+    create_response		= self.__request("CreateSession", create_data)
+    if Mode.debug: print create_response
+
+    self.session_token		= create_response["SessionToken"]
+
 
   # Do Info
   # GET /edsapi/rest/Info Http/1.1 
@@ -186,8 +209,15 @@ class Connection:
   #   x-sessionToken: [SessionToken]
   # Receive JSON with:
   #  Lots of info
-  # Need it to do searches correctly?
-    pass
+
+    info_data			= {}
+
+    info_response		= self.__request("Info", info_data)
+    if Mode.debug: print info_response
+    self.info_data		= info_response
+	# TODO: catch SessionTimeout?
+
+  # End of connect
 
   # Do a search
   def search(self, query):
@@ -207,7 +237,13 @@ class Connection:
     pass
 
 
-
+  def disconnect(self):
+    end_data			= {
+					"SessionToken": self.session_token
+				  }
+    end_response		= self.__request("EndSession", end_data)
+    if Mode.debug: print end_response
+  # End of disconnect
 
 
 #EOF

@@ -6,5 +6,7 @@ from ebscopy import ebscopy
 #import  ebscopy
 
 connection	= ebscopy.Connection()
+connection.connect()
+connection.disconnect()
 
 
