@@ -44,7 +44,9 @@
 
 import json		# Need this for managing input and output
 import os		# Need this to get ENV variables with auth info
-from config import Mode
+import urllib2
+import requests
+from config import *
 
 
 # Connection object
@@ -98,21 +100,51 @@ class Connection:
 
     pass
     
-  # Internal method to generate a URL
-  def __build_url(self, **kwargs):
-  # /edsapi/rest/
-  # /authservice/rest/UIDAuth 
-    pass
+  # Internal method to generate an HTTP request 
+  def __request(self, method, data):
+    valid_methods		= frozenset(CreateSession, Info, Search, Retrieve, EndSession, UIDAuth, SearchCriteria)
+    if method not in valid_methods:
+      raise ValueError
 
-  # Internal method to actually connect and get data
-  def __get(self, url, data):
-  # Check for timeout, reinit if needed
+    base_host			= "https://eds-api.ebscohost.com"
+    base_path			= ""
+    base_url			= ""
+    full_url			= ""
 
-  # Handle error, reinit if needed
-  # 400 error, invalid session token
-  #  Receive JSON:
-  #    {"DetailedErrorDescription":"Invalid Session Token. Please generate a new one.","ErrorDescription":"Session Token Invalid","ErrorNumber":"109"}
-    pass
+    if method == "UIDAuth":
+      base_path			= "/authservice/rest/"
+    else:
+      base_path			= "/edsapi/rest/"
+
+    full_url			= base_host + base_path + method
+
+    headers			= {'Content-Type'='application/json', 'Accept'='application/json'}
+
+    if self.auth_token:
+      headers['x-authenticationToken']	= self.auth_token
+    elif method is not "UIDAuth":
+      raise ValueError
+      
+    if self.session_token:
+      headers['x-sessionToken']		= self.session_token
+    elif method not in ("UIDAuth", "CreateSession"):
+      raise ValueError
+
+    r				= requests.post(full_url, data=data, headers=headers)
+    code			= r.status_code
+    if code is not "200":
+      if code is "400" and method not in ("UIDAuth", "CreateSession"):
+        #TODO: Probably a timeout issue, need to recover
+  	# 400 error, invalid session token
+  	#  Receive JSON:
+  	#    {"DetailedErrorDescription":"Invalid Session Token. Please generate a new one.","ErrorDescription":"Session Token Invalid","ErrorNumber":"109"}
+      else
+        r.raise_for_status()
+
+    # This should be a dict now...?
+    return r.json()
+  # End of __request
+
 
   def connect(self):
   # Do UIDAuth
