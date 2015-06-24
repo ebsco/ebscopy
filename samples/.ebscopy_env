@@ -1,0 +1,10 @@
+# Sample environment file for ebscopy
+# If the Connection object is not initiliazed with login settings, it will try to pull them from the user's environment
+# To use, source this file into your environment, either manually or at login:
+# . ~/.ebscopy_env
+export EDS_USER=username
+export EDS_PASS=password
+export EDS_PROFILE=profile
+export EDS_ORG=org
+export EDS_GUEST=n
+
