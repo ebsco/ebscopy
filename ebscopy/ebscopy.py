@@ -44,20 +44,58 @@
 
 import json		# Need this for managing input and output
 import os		# Need this to get ENV variables with auth info
+from config import Mode
 
 
 # Connection object
 class Connection:
 
   # Initialize Connection object with auth and config info
-  def __init__(self):
-  # Need:
-  #  UserId
-  #  Password
-  #  InterfaceId
-  #  profile
-  #  org
-  #  guest value
+  def __init__(self, user_id="", password="", profile="", org="", guest="" ):
+    self.user_id		= user_id
+    self.password		= password
+    self.profile		= profile
+    self.org			= org
+    self.guest			= guest
+    self.interface_id		= 'ebscopy'
+
+    if not self.user_id:
+      if os.environ.get('EDS_USER'):
+        self.user_id		= os.environ['EDS_USER']
+      else:
+        raise ValueError
+
+    if not self.password:
+      if os.environ.get('EDS_PASS'):
+        self.password		= os.environ['EDS_PASS']
+      else:
+        raise ValueError
+
+    if not self.profile:
+      if os.environ.get('EDS_PROFILE'):
+        self.profile		= os.environ['EDS_PROFILE']
+      else:
+        raise ValueError
+
+    if not self.org:
+      if os.environ.get('EDS_ORG'):
+        self.org		= os.environ['EDS_ORG']
+      else:
+        raise ValueError
+
+    if not self.guest:
+      if os.environ.get('EDS_GUEST'):
+        self.guest		= os.environ['EDS_GUEST']
+      else:
+        self.guest		= "n"
+
+    if Mode.debug:
+      print self.user_id
+      print self.password
+      print self.profile
+      print self.org
+      print self.guest
+
     pass
     
   # Internal method to generate a URL
