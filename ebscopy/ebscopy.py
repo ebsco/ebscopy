@@ -44,11 +44,11 @@
 
 import json					# Manage data
 import os					# Get ENV variables with auth info
-#import urllib2
 import requests					# Does the heavy HTTP lifting
 from datetime import datetime, timedelta	# Monitor authentication timeout
 import inspect					# For debugging
-from config import *
+import logging					# Smart logging
+from config import Mode				# ebscopy config settings
 
 
 # Connection object
