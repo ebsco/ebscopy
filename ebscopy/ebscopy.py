@@ -47,6 +47,7 @@ import os					# Get ENV variables with auth info
 #import urllib2
 import requests					# Does the heavy HTTP lifting
 from datetime import datetime, timedelta	# Monitor authentication timeout
+import inspect					# For debugging
 from config import *
 
 
@@ -107,6 +108,9 @@ class Connection:
       raise ValueError
 
     data_json			= json.dumps(data)
+    print
+    if Mode.debug: print __name__, inspect.stack()[0][3], "data_json"
+    if Mode.debug: print data_json
     base_host			= "https://eds-api.ebscohost.com"
     base_path			= ""
     base_url			= ""
@@ -118,6 +122,9 @@ class Connection:
       base_path			= "/edsapi/rest/"
 
     full_url			= base_host + base_path + method
+    print
+    if Mode.debug: print __name__, inspect.stack()[0][3], "full_url"
+    if Mode.debug: print full_url
 
     headers			= {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
@@ -136,7 +143,17 @@ class Connection:
       if method not in ("UIDAuth", "CreateSession"):
         raise ValueError
 
+	
+    print
+    if Mode.debug: print __name__, inspect.stack()[0][3], "headers"
+    if Mode.debug: print headers
+
     r				= requests.post(full_url, data=data_json, headers=headers)
+    print
+    if Mode.debug: print __name__, inspect.stack()[0][3], "r"
+    print r
+    print
+	
     code			= r.status_code
     if code is not "200":
       if code is "400" and method not in ("UIDAuth", "CreateSession"):
@@ -146,10 +163,15 @@ class Connection:
   	#  Receive JSON:
   	#    {"DetailedErrorDescription":"Invalid Session Token. Please generate a new one.","ErrorDescription":"Session Token Invalid","ErrorNumber":"109"}
       else:
-        r.raise_for_status()
+        print r.text
+    #    r.raise_for_status()
+        pass
 
     # This should be a dict now...?
-    return r.json()
+    if method is not "Search":
+      return r.json()
+    else:
+      return
   # End of __request
 
 
@@ -157,7 +179,7 @@ class Connection:
   # Do UIDAuth
   # POST /authservice/rest/UIDAuth Http/1.1
   # Headers:
-  #   Content-Type: applicaton/json
+  #   Content-Type: applicaton/son
   #   Accept: applicaton/json
   # Send JSON with:
   #  UserId
@@ -195,6 +217,7 @@ class Connection:
 				}
 
     create_response		= self.__request("CreateSession", create_data)
+    if Mode.debug: print __name__, inspect.stack()[0][3]
     if Mode.debug: print create_response
 
     self.session_token		= create_response["SessionToken"]
@@ -213,6 +236,7 @@ class Connection:
     info_data			= {}
 
     info_response		= self.__request("Info", info_data)
+    if Mode.debug: print __name__, inspect.stack()[0][3]
     if Mode.debug: print info_response
     self.info_data		= info_response
 	# TODO: catch SessionTimeout?
@@ -220,22 +244,50 @@ class Connection:
   # End of connect
 
   # Do a search
-  def search(self, query):
+  def search(self, query, mode="all", sort="relevance", inc_facets="y", view="brief", rpp=20, page=1, highlight="y"):
 
-  # Pull in info needed:
-  #  query(ies)
-  #  searchmode
-  #  resultsperpage
-  #  pagenumber (maintain this state)?
-  #  sort type
-  #  highlighting?
-  #  include facets?
-  #  view
-  #  expander
+    search_data			= {
+					"SearchCriteria": {
+						"Queries": [
+								{
+									"Term": query
+								}
+						],
+						"SearchMode": mode,
+						"IncludeFacets": inc_facets,
+						"Sort": sort
+					},
+					"RetrievalCriteria": {
+						"View": view,
+						"ResultsPerPage": rpp,
+						"PageNumber": page,
+						"Highlight": highlight
+					},
+					"Actions": None
+				}
+    simple_data			= {
+					"SearchCriteria": {
+						"Queries": [
+								{
+									"Term": query
+								}
+						]
+					}
+				}
+		
+    print
+    if Mode.debug: print __name__, inspect.stack()[0][3], "search_data:"
+    if Mode.debug: print search_data
 
-  # GET /edsapi/rest/Search?query=[QUERY]&searchmode=[bool|all|any|smart]&resultsperpage=20&pagenumber=1&sort=relevance&highlight=y&includefacets=y&view=brief&expander=fulltext Http/1.1 
-    pass
+    print
+    search_response		= self.__request("Search", search_data)
+    if Mode.debug: print __name__, inspect.stack()[0][3], "search response:"
+    if Mode.debug: print search_response
 
+
+    return search_response
+
+  # End of search
 
   def disconnect(self):
     end_data			= {
