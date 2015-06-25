@@ -7,7 +7,7 @@ The official Python wrapper for the EBSCO Discovery Service API.
 ```
 import ebscopy
 
-connection      = ebscopy.Connection()
+connection = ebscopy.Connection()
 connection.connect()
 results = connection.search("blue")
 
