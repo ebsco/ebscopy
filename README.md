@@ -1,8 +1,7 @@
 # ebscopy
 (/ˈɛbskoʊˌpaɪ/, not /ˈɛbskɒpiː/)
 
-The official Python wrapper for the EBSCO Discover Service API.
-
+The official Python wrapper for the EBSCO Discovery Service API.
 
 # Usage
 ```
