@@ -9,10 +9,13 @@ results = connection.search("blue")
 print "---------------"
 print "Search Results"
 print "---------------"
-#pprint.pprint(results)
-#print results
-print "---------------"
 results.pretty_print()
+print "---------------"
+print "Total Hits:"
+print results.stat_total_hits
+print "---------------"
+print "Available Facets:"
+print results.avail_facets_labels
 print "---------------"
 print 
 connection.disconnect()

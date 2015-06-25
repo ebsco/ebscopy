@@ -253,7 +253,7 @@ class Results:
   # Load with dict
   def load(self, data):
     self.stat_total_hits	= data["SearchResult"]["Statistics"]["TotalHits"]
-    self.stat_total_hits	= data["SearchResult"]["Statistics"]["TotalSearchTime"]
+    self.stat_total_time	= data["SearchResult"]["Statistics"]["TotalSearchTime"]
     self.stat_databases		= data["SearchResult"]["Statistics"]["Databases"]
 
     self.avail_facets		= data["SearchResult"]["AvailableFacets"]
