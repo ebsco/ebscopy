@@ -48,6 +48,7 @@ import requests					# Does the heavy HTTP lifting
 from datetime import datetime, timedelta	# Monitor authentication timeout
 import inspect					# For debugging
 import logging					# Smart logging
+import pprint
 from config import Mode				# ebscopy config settings
 
 
@@ -93,14 +94,12 @@ class Connection:
       else:
         self.guest		= "n"
 
-    if Mode.debug:
-      print self.user_id
-      print self.password
-      print self.profile
-      print self.org
-      print self.guest
+    logging.debug("UserID: %s", self.user_id)
+    logging.debug("Password: %s", self.password)
+    logging.debug("Profile: %s", self.profile)
+    logging.debug("Org: %s", self.org)
+    logging.debug("Guest: %s", self.guest)
 
-    
   # Internal method to generate an HTTP request 
   def __request(self, method, data):
     valid_methods		= frozenset(["CreateSession", "Info", "Search", "Retrieve", "EndSession", "UIDAuth", "SearchCriteria"])
@@ -108,9 +107,7 @@ class Connection:
       raise ValueError
 
     data_json			= json.dumps(data)
-    print
-    if Mode.debug: print __name__, inspect.stack()[0][3], "data_json"
-    if Mode.debug: print data_json
+    logging.debug("JSON data being sent: %s", data_json)
     base_host			= "https://eds-api.ebscohost.com"
     base_path			= ""
     base_url			= ""
@@ -122,9 +119,7 @@ class Connection:
       base_path			= "/edsapi/rest/"
 
     full_url			= base_host + base_path + method
-    print
-    if Mode.debug: print __name__, inspect.stack()[0][3], "full_url"
-    if Mode.debug: print full_url
+    logging.debug("Full URL: %s", full_url)
 
     headers			= {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
@@ -143,73 +138,43 @@ class Connection:
       if method not in ("UIDAuth", "CreateSession"):
         raise ValueError
 
-	
-    print
-    if Mode.debug: print __name__, inspect.stack()[0][3], "headers"
-    if Mode.debug: print headers
+    logging.debug("Request headers: %s", headers)
 
     r				= requests.post(full_url, data=data_json, headers=headers)
-    print
-    if Mode.debug: print __name__, inspect.stack()[0][3], "r"
-    print r
-    print
-	
+    logging.debug("Request response object: %s", r)
+
     code			= r.status_code
-    if code is not "200":
-      if code is "400" and method not in ("UIDAuth", "CreateSession"):
-        if Mode.debug: print "Session died!?!"
+    if code is not 200:
+      if code is 400 and method not in ("UIDAuth", "CreateSession"):
+        logging.debug("Session died?!?!")
         #TODO: Probably a timeout issue, need to recover
   	# 400 error, invalid session token
   	#  Receive JSON:
   	#    {"DetailedErrorDescription":"Invalid Session Token. Please generate a new one.","ErrorDescription":"Session Token Invalid","ErrorNumber":"109"}
       else:
-        print r.text
-    #    r.raise_for_status()
-        pass
+        logging.debug("Error text: %s", r.text)
+        r.raise_for_status()
 
     # This should be a dict now...?
-    if method is not "Search":
-      return r.json()
-    else:
-      return
+    return r.json()
   # End of __request
 
 
   def connect(self):
-  # Do UIDAuth
-  # POST /authservice/rest/UIDAuth Http/1.1
-  # Headers:
-  #   Content-Type: applicaton/son
-  #   Accept: applicaton/json
-  # Send JSON with:
-  #  UserId
-  #  Password
-  #  InterfaceId
-  # Receive JSON with:
-  #  AuthToken
-  #  AuthTimeout
-
+    # Do UIDAuth
     auth_data			= {
 					"UserId":	self.user_id,
 					"Password":	self.password,
 					"InterfaceId":	self.interface_id
 			  	}
     auth_response		= self.__request("UIDAuth", auth_data)
-    if Mode.debug: print auth_response
+    logging.debug("UIDAuth response: %s", auth_response)
 
     self.auth_token		= auth_response["AuthToken"]
     self.auth_timeout		= auth_response["AuthTimeout"]
     self.auth_timeout_time	= datetime.now() + timedelta(seconds=int(self.auth_timeout))
 
-  # Do CreateSession
-  # GET /edsapi/rest/CreateSession?profile=[PROFILE]&org=[ORG]&guest=[Y/N] Http/1.1
-  # Headers:
-  #   Content-Type: applicaton/json
-  #   Accept: applicaton/json
-  #   x-authenticationToken: [AuthToken]
-  # Receive JSON with:
-  #  SessionToken
-
+    # Do CreateSession
     create_data			= {
 					"Profile":	self.profile,
 					"Guest":	self.guest,
@@ -217,30 +182,20 @@ class Connection:
 				}
 
     create_response		= self.__request("CreateSession", create_data)
-    if Mode.debug: print __name__, inspect.stack()[0][3]
-    if Mode.debug: print create_response
+    logging.debug("CreateSession response: %s", create_response)
 
     self.session_token		= create_response["SessionToken"]
 
 
-  # Do Info
-  # GET /edsapi/rest/Info Http/1.1 
-  # Headers:
-  #   Content-Type: applicaton/json
-  #   Accept: applicaton/json
-  #   x-authenticationToken: [AuthToken]
-  #   x-sessionToken: [SessionToken]
-  # Receive JSON with:
-  #  Lots of info
-
+    # Do Info
     info_data			= {}
 
     info_response		= self.__request("Info", info_data)
-    if Mode.debug: print __name__, inspect.stack()[0][3]
-    if Mode.debug: print info_response
+    logging.debug("Info response: %s", info_response)
     self.info_data		= info_response
 	# TODO: catch SessionTimeout?
 
+    return 
   # End of connect
 
   # Do a search
@@ -265,28 +220,17 @@ class Connection:
 					},
 					"Actions": None
 				}
-    simple_data			= {
-					"SearchCriteria": {
-						"Queries": [
-								{
-									"Term": query
-								}
-						]
-					}
-				}
 		
-    print
-    if Mode.debug: print __name__, inspect.stack()[0][3], "search_data:"
-    if Mode.debug: print search_data
+    logging.debug("Search data: %s", search_data)
 
-    print
     search_response		= self.__request("Search", search_data)
-    if Mode.debug: print __name__, inspect.stack()[0][3], "search response:"
-    if Mode.debug: print search_response
 
+    logging.debug("Search response: %s", search_response)
 
-    return search_response
+    results			= Results()
+    results.load(search_response)
 
+    return results
   # End of search
 
   def disconnect(self):
@@ -294,8 +238,61 @@ class Connection:
 					"SessionToken": self.session_token
 				  }
     end_response		= self.__request("EndSession", end_data)
-    if Mode.debug: print end_response
-  # End of disconnect
+    logging.debug("EndSession response: %s", end_response)
+    return
+  # End of disconnect function
+
+# End of Connection class
+
+class Results:
+
+  # Initialize 
+  def __init__(self):
+    pass
+
+  # Load with dict
+  def load(self, data):
+    self.stat_total_hits	= data["SearchResult"]["Statistics"]["TotalHits"]
+    self.stat_total_hits	= data["SearchResult"]["Statistics"]["TotalSearchTime"]
+    self.stat_databases		= data["SearchResult"]["Statistics"]["Databases"]
+
+    self.avail_facets		= data["SearchResult"]["AvailableFacets"]
+    self.avail_facets_labels	= []
+    self.avail_facets_ids	= []
+    for facet in data["SearchResult"]["AvailableFacets"]:
+      self.avail_facets_labels.append(facet["Label"])
+      self.avail_facets_ids.append(facet["Id"])
+
+    self.rec_format		= data["SearchResult"]["Data"]["RecordFormat"]
+    self.records		= data["SearchResult"]["Data"]["Records"]
+    self.simple_records		= []
+    for record in data["SearchResult"]["Data"]["Records"]:
+      simple_rec		= {}
+      simple_rec["PLink"]	= record["PLink"]
+      simple_rec["DbId"]	= record["Header"]["DbId"]
+      simple_rec["An"]		= record["Header"]["An"]
+      simple_rec["Title"]	= record["RecordInfo"]["BibRecord"]["BibEntity"]["Titles"][0]["TitleFull"]
+      self.simple_records.append(simple_rec)
+  # End of load function
+
+  def pretty_print(self):
+    for record in self.simple_records:
+      print("Title: %s" % record["Title"])
+      print("PLink: %s" % record["PLink"])
+      print("DbId: %s" % record["DbId"])
+      print("An: %s" % record["An"])
+      print("------------")
+    #pprint.pprint(self.simple_records)
+    
+    
+
+# End of Results class
+
+
+class Record:
+  pass
+
+# End of Record class
 
 
 #EOF
