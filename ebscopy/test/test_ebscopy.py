@@ -19,7 +19,7 @@ print results.avail_facets_labels
 print "---------------"
 print 
 
-record = connection.retrieve(results.simple_records[0]['DbId'], results.simple_records[0]['An'])
+record = connection.retrieve(results.simple_records[0]['DbId'], results.simple_records[0]['An'], highlight=["blue"])
 print "---------------"
 print "Record Info"
 print "---------------"
@@ -27,6 +27,12 @@ record.pprint()
 print "---------------"
 
 
+record = connection.retrieve(results.simple_records[1]['DbId'], results.simple_records[1]['An'])
+print "---------------"
+print "Record Info"
+print "---------------"
+record.pprint()
+print "---------------"
 
 
 connection.disconnect()
