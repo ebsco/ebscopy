@@ -2,9 +2,29 @@
 # If the Connection object is not initiliazed with login settings, it will try to pull them from the user's environment
 # To use, source this file into your environment, either manually or at login:
 # . ~/.ebscopy_env
+
+# Controls the type of authentication
+# ip : Use IP authentication
+# user: Use user/pass authentication
+export EDS_AUTH=user
+
+# If using user/pass authentication set them thusly
 export EDS_USER=username
 export EDS_PASS=password
+
+# EDS Profile to use
 export EDS_PROFILE=profile
+
+# Organization name to send when creating session
+# Useful for usage reporting
 export EDS_ORG=org
+
+# Allow guest access
 export EDS_GUEST=n
 
+# Whether to highlight search matches in results
+export EDS_HIGHLIGHT=n
+
+# Set the log level for ebscopy
+# DEBUG, INFO, WARNING, ERROR, CRITICAL
+export EDS_LOG_LEVEL=INFO

@@ -13,7 +13,7 @@ results = connection.search("blue")
 
 print "Search Results"
 print "---------------"
-results.pretty_print()
+results.pprint()
 
 print "Total Hits:"
 print results.stat_total_hits
