@@ -1,6 +1,4 @@
-include README.txt
+include README.md
 include CHANGES.txt
 include LICENSE.txt
-include CONTRIBUTORS.txt
-include HISTORY.txt
-recursive-include *.txt *.py
+recursive-include *.txt *.py *.md

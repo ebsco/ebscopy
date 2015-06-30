@@ -11,7 +11,7 @@ setup(
   packages=find_packages(),
   include_package_data=True,
   description='Official Python wrapper for EBSCO Discovery Service (EDS) API',
-  long_description=open('README.txt').read(),
+  long_description=open('README.md').read(),
   install_requires=[
 			'docutils>=0.3',
 			'requests',
@@ -20,7 +20,7 @@ setup(
   ],
   package_data = {
 			# If any package contains *.txt or *.rst files, include them:
-			'': ['*.txt', '*.rst', 'scripts', 'docs', 'samples',],
+			'': ['*.txt', '*.md', 'scripts', 'docs', 'samples',],
   },
 )
 

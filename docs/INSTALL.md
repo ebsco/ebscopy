@@ -12,7 +12,7 @@
 		$  . py279/bin/activate
 		(py279)$ 
 4. Use `pip` to install `ebscopy` (and its dependencies):
-		(py279)$ pip install https://pypi.python.org/packages/source/e/ebscopy/ebscopy-0.0.2.dev1.tar.gz
+		(py279)$ pip install ebscopy
 #md5=249fdc8f2f39a4c04126ea1ed2ed9151
 		Collecting https://pypi.python.org/packages/source/e/ebscopy/ebscopy-0.0.2.dev1.tar.gz#md5=249fdc8f2f39a4c04126ea1ed2ed9151
 		  Downloading ebscopy-0.0.2.dev1.tar.gz
