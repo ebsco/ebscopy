@@ -1,1 +1,2 @@
-v0.0.1dev, 2015-06-23 -- Initial release.
+v0.0.1.dev0, 2015-06-23 -- Initial release.
+v0.0.2.dev0, 2015-06-30 -- Packaging.

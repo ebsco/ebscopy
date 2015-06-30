@@ -1,24 +1,27 @@
-try:
-  from setuptools import setup
-except ImportError:
-  from distutils.core import setup
-
+from setuptools import setup, find_packages
 
 setup(
   name='ebscopy',
-  version='0.0.2.dev0',
+  version='0.0.2.dev1',
   author='Jesse Jensen',
   author_email='jjensen@ebsco.com',
   url='https://github.com/jessejensen/ebscopy',
-  packages=['ebscopy','ebscopy.test'],
+  license='GNUv3',
+  #packages=['ebscopy','ebscopy.test'],
+  packages=find_packages(),
   include_package_data=True,
-  description='Official Python wrapper for EBSCO Discover Service (EDS) API',
+  description='Official Python wrapper for EBSCO Discovery Service (EDS) API',
   long_description=open('README.txt').read(),
   install_requires=[
-          'requests',
-          'datetime',
-          'logging',
-      ],
+			'docutils>=0.3',
+			'requests',
+			'datetime',
+			'logging',
+  ],
+  package_data = {
+			# If any package contains *.txt or *.rst files, include them:
+			'': ['*.txt', '*.rst', 'scripts', 'docs', 'samples',],
+  },
 )
 
 
