@@ -3,17 +3,21 @@
 ## AWS Environment
 1. Create an Amazon Machine Instance and log in
 2. Create a `virtualenv`:
+
 		$ virtualenv py279
 		New python executable in py279/bin/python2.7
 		Also creating executable in py279/bin/python
 		Installing setuptools, pip...done. 
 		$ 
+
 3. Activate the `virtualenv`:
+
 		$  . py279/bin/activate
 		(py279)$ 
+
 4. Use `pip` to install `ebscopy` (and its dependencies):
+
 		(py279)$ pip install ebscopy
-#md5=249fdc8f2f39a4c04126ea1ed2ed9151
 		Collecting https://pypi.python.org/packages/source/e/ebscopy/ebscopy-0.0.2.dev1.tar.gz#md5=249fdc8f2f39a4c04126ea1ed2ed9151
 		  Downloading ebscopy-0.0.2.dev1.tar.gz
 		Collecting docutils>=0.3 (from ebscopy==0.0.2.dev1)
@@ -37,7 +41,9 @@
 		  Running setup.py install for ebscopy
 		Successfully installed datetime-4.0.1 docutils-0.12 ebscopy-0.0.2.dev1 logging-0.4.9.6 pytz-2015.4 requests-2.7.0 zope.interface-4.1.2
 		(py279)$ 
+
 5. Create the environment file with connection info (use sample.ebscopy_env, if needed):
+
 		(py279)$ vi .ebscopy_env
 		export EDS_AUTH=user
 		export EDS_USER=username
@@ -48,10 +54,15 @@
 		export EDS_HIGHLIGHT=n
 		export EDS_LOG_LEVEL=INFO
 		~
+		~
+
 6. Source the environment file:
+
 		(py279)$ . ~/.ebscopy_env
 		(py279)$ 
+
 7. Test:
+
 		(py279)$ python          
 		Python 2.7.9 (default, Apr  1 2015, 18:18:03) 
 		[GCC 4.8.2 20140120 (Red Hat 4.8.2-16)] on linux2
