@@ -49,6 +49,8 @@ def _get_item_data(items, name):
 
 
 # Connection object
+# Create with credentials and settings, then call connect()
+# TODO: Support multiple connections?
 class Connection:
 
   # Initialize Connection object with auth and config info
@@ -64,25 +66,25 @@ class Connection:
       if os.environ.get('EDS_USER'):
         self.user_id		= os.environ['EDS_USER']
       else:
-        raise ValueError
+        raise ValueError("Could not find value for user_id in passed parameters or OS environment")
 
     if not self.password:
       if os.environ.get('EDS_PASS'):
         self.password		= os.environ['EDS_PASS']
       else:
-        raise ValueError
+        raise ValueError("Could not find value for password in passed parameters or OS environment")
 
     if not self.profile:
       if os.environ.get('EDS_PROFILE'):
         self.profile		= os.environ['EDS_PROFILE']
       else:
-        raise ValueError
+        raise ValueError("Could not find value for profile in passed parameters or OS environment")
 
     if not self.org:
       if os.environ.get('EDS_ORG'):
         self.org		= os.environ['EDS_ORG']
       else:
-        raise ValueError
+        raise ValueError("Could not find value for org in passed parameters or OS environment")
 
     if not self.guest:
       if os.environ.get('EDS_GUEST'):
@@ -101,7 +103,7 @@ class Connection:
   def __request(self, method, data):
     valid_methods		= frozenset(["CreateSession", "Info", "Search", "Retrieve", "EndSession", "UIDAuth", "SearchCriteria"])
     if method not in valid_methods:
-      raise ValueError
+      raise ValueError("Unknown API method requested")
 
     data_json			= json.dumps(data)
     logging.debug("JSON data being sent: %s", data_json)
@@ -126,14 +128,14 @@ class Connection:
     #elif method is not "UIDAuth":
     except:
       if method is not "UIDAuth":
-        raise ValueError
+        raise ValueError("Missing Authentication Token!")
       
     #if self.session_token:
     try:
       headers['x-sessionToken']		= self.session_token
     except:
       if method not in ("UIDAuth", "CreateSession"):
-        raise ValueError
+        raise ValueError("Missing Session Token!")
 
     logging.debug("Request headers: %s", headers)
 
@@ -156,7 +158,7 @@ class Connection:
     return r.json()
   # End of [__request] function
 
-
+  # Actually connect to the API, doing an authorization, create session, and get info
   def connect(self):
     # Do UIDAuth
     auth_data			= {
@@ -192,7 +194,7 @@ class Connection:
 	# TODO: catch SessionTimeout?
 
     return 
-  # End of connect
+  # End of [connect] function
 
 
   # Do a search

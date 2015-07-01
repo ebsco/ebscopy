@@ -1,4 +1,4 @@
-# ebscopy
+# ebscopy __init__
 
 import os
 import logging 
@@ -19,13 +19,9 @@ else:
   log_level			= logging.NOTSET
 
 logging.basicConfig(
-			filename='/tmp/ebscopy.log',
+			filename='/tmp/ebscopy-%s.log' % (os.getpid()),
 			level=log_level,
 			format='%(asctime)s %(levelname)s %(module)s.%(funcName)s: %(message)s'
 )
-
-__version__			= '0.0.1'
-__author__			= 'Jesse Jensen'
-
 
 #EOF
