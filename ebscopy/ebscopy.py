@@ -1,46 +1,8 @@
 # ebscopy.py
 
-# Version 0.0.1
-#
 # To Do:
-# define connection object
-#	be able to accept credentials
 #	be able to use IP
-#	log in, create session
-#	keep open
 #	close on destroy
-#	
-# 
-# Reference:
-# EDS API
-#	GET CreateSession  info
-#	POST CreateSession  info
-#
-#	GET Info  info
-#	POST Info  info
-#
-#	GET Search  info
-#	POST Search  info
-#
-#	GET Retrieve  info
-#	POST Retrieve  info
-#
-#	GET EndSession  info
-#	POST EndSession  info
-#
-# Authentication
-#	POST UIDAuth  info
-#
-# Publication API
-#	GET Search  info
-#	POST Search  info
-#
-#	GET Retrieve  info
-#	POST Retrieve  info
-#
-#	GET SearchCriteria  info
-#	POST SearchCriteria  info
-#
 
 import json					# Manage data
 import os					# Get ENV variables with auth info
@@ -49,8 +11,6 @@ from datetime import datetime, timedelta	# Monitor authentication timeout
 import inspect					# For debugging
 import logging					# Smart logging
 import re					# Strip highlighting
-#from config import Mode				# ebscopy config settings
-
 
 # Take text with highlight tagging, remove the highlight tags but save the locations
 # TODO: this assumes only one highlight in string; what if more?
