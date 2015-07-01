@@ -4,10 +4,11 @@
 The official Python wrapper for the EBSCO Discovery Service API.
 
 # Usage
-```python
+```
+python
 import ebscopy
 
-connection = ebscopy.Connection()
+connection = ebscopy.Connection(user_id="user", password="pass", profile="profile", org="org", guest="n")
 connection.connect()
 results = connection.search("blue")
 
@@ -23,6 +24,10 @@ print results.avail_facets_labels
 
 connection.disconnect()
 ```
+
+# Installation
+* See [INSTALL.md](docs/INSTALL.md)
+
 # Notes
 
 # Links

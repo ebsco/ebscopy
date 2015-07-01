@@ -74,9 +74,10 @@ def _parse_highlight(text):
     output["clean"]		= output["clean"][:end_match.start()] + output["clean"][end_match.end():]
 
   return output
-# End of _parse_highlight function
+# End of [_parse_highlight] function
 
 
+# Get the "Data" component of a named item from an arbitrarily sorted JSON list
 def _get_item_data(items, name):
   dictionary			= next((item for item in items if item["Name"] == name), None)
   if dictionary:
@@ -84,7 +85,7 @@ def _get_item_data(items, name):
   else:
     logging.warn("No match for %s in items!", name)
     return None
-# End of _get_item_data function
+# End of [_get_item_data] function
 
 
 # Connection object
@@ -134,6 +135,7 @@ class Connection:
     logging.debug("Profile: %s", self.profile)
     logging.debug("Org: %s", self.org)
     logging.debug("Guest: %s", self.guest)
+  # End of [__init__] function
 
   # Internal method to generate an HTTP request 
   def __request(self, method, data):
@@ -192,7 +194,7 @@ class Connection:
 
     # This should be a dict now...?
     return r.json()
-  # End of __request
+  # End of [__request] function
 
 
   def connect(self):
@@ -221,7 +223,6 @@ class Connection:
 
     self.session_token		= create_response["SessionToken"]
 
-
     # Do Info
     info_data			= {}
 
@@ -232,6 +233,7 @@ class Connection:
 
     return 
   # End of connect
+
 
   # Do a search
   def search(self, query, mode="all", sort="relevance", inc_facets="y", view="brief", rpp=20, page=1, highlight="y"):
@@ -266,13 +268,13 @@ class Connection:
     results.load(search_response)
 
     return results
-  # End of search
+  # End of [search] function
 
   # Retrieve a record
-  def retrieve(self, dbid, an, highlight=None, ebook="ebook-pdf"):
+  def retrieve(self, dbid_an_tup, highlight=None, ebook="ebook-pdf"):
     retrieve_data		= {
-					"DbId": dbid,
-					"An": an,
+					"DbId": dbid_an_tup[0],
+					"An": dbid_an_tup[1],
 					"HighlightTerms": highlight,
 					"EbookPreferredFormat": ebook
 				}
@@ -287,9 +289,9 @@ class Connection:
     record.load(retrieve_response)
 
     return record
+  # End of [retrieve] function
 
-
-
+  # Disconnect the connection
   def disconnect(self):
     end_data			= {
 					"SessionToken": self.session_token
@@ -297,9 +299,8 @@ class Connection:
     end_response		= self.__request("EndSession", end_data)
     logging.debug("EndSession response: %s", end_response)
     return
-  # End of disconnect function
-
-# End of Connection class
+  # End of [disconnect] function
+# End of [Connection] class
 
 # Results object returned by Search request
 class Results:
@@ -312,9 +313,10 @@ class Results:
     self.avail_facets_raw	= []
     self.avail_facets_labels	= []
     self.avail_facets_ids	= []
-    self.simple_records		= []
-    self.rec_format		= ""
-    self.records_raw		= []
+    self.simple_records		= []		# List of dicts with keys: PLink, DbID, An, Title, Author?
+    self.rec_format		= ""		# String straight from JSON
+    self.records_raw		= []		# List of raw Records straight from JSON
+    self.record			= []		# List of DbId/An tuples
 
   # Load with dict
   def load(self, data):
@@ -338,6 +340,7 @@ class Results:
       simple_rec["Title"]	= record["RecordInfo"]["BibRecord"]["BibEntity"]["Titles"][0]["TitleFull"]
       # TODO: add fulltext true/false
       self.simple_records.append(simple_rec)
+      self.record.append((record["Header"]["DbId"], record["Header"]["An"])) 
   # End of load function
 
   def pprint(self):

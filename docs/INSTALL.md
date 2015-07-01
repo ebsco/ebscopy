@@ -1,8 +1,6 @@
 # How to Install
 
-## AWS Environment
-1. Create an Amazon Machine Instance and log in
-2. Create a `virtualenv`:
+1. Create a `virtualenv`:
 
 		$ virtualenv py279
 		New python executable in py279/bin/python2.7
@@ -10,12 +8,12 @@
 		Installing setuptools, pip...done. 
 		$ 
 
-3. Activate the `virtualenv`:
+2. Activate the `virtualenv`:
 
 		$  . py279/bin/activate
 		(py279)$ 
 
-4. Use `pip` to install `ebscopy` (and its dependencies):
+3. Use `pip` to install `ebscopy` (and its dependencies):
 
 		(py279)$ pip install ebscopy
 		Collecting https://pypi.python.org/packages/source/e/ebscopy/ebscopy-0.0.2.dev1.tar.gz#md5=249fdc8f2f39a4c04126ea1ed2ed9151
@@ -42,7 +40,7 @@
 		Successfully installed datetime-4.0.1 docutils-0.12 ebscopy-0.0.2.dev1 logging-0.4.9.6 pytz-2015.4 requests-2.7.0 zope.interface-4.1.2
 		(py279)$ 
 
-5. Create the environment file with connection info (use sample.ebscopy_env, if needed):
+4. Create the environment file with connection info (use sample.ebscopy_env, if needed):
 
 		(py279)$ vi .ebscopy_env
 		export EDS_AUTH=user
@@ -56,12 +54,12 @@
 		~
 		~
 
-6. Source the environment file:
+5. Source the environment file:
 
 		(py279)$ . ~/.ebscopy_env
 		(py279)$ 
 
-7. Test:
+6. Test:
 
 		(py279)$ python          
 		Python 2.7.9 (default, Apr  1 2015, 18:18:03) 
