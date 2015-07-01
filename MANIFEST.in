@@ -1,4 +1,4 @@
-include README.md
-include CHANGES.txt
-include LICENSE.txt
-recursive-include *.txt *.py *.md
+include *.txt
+include *.md
+graft docs
+graft samples
