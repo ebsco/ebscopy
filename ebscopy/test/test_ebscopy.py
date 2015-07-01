@@ -3,23 +3,24 @@
 from ebscopy import ebscopy
 import unittest
 from requests import HTTPError
+import os
 
 class ExplicitConnectionTests(unittest.TestCase):
   def setUp(self):
     self.old_os_env_user	= os.getenv("EDS_USER")
-    os.environ["EDS_USER"]=	= ""
+    os.environ["EDS_USER"]	= ""
 
 
   def tearDown(self):
-    os.environ["EDS_USER"]=	= self.old_os_enf_user
+    os.environ["EDS_USER"]	= self.old_os_env_user
 
   def test_good_explicit_connection_works(self):
-    user_id		= os.getenv("EDS_USER")
+    user_id		= self.old_os_env_user
     password		= os.getenv("EDS_PASS")
     profile		= os.getenv("EDS_PROFILE")
     org			= os.getenv("EDS_ORG")
     guest		= os.getenv("EDS_GUEST")
-    c			= ebscopy.Connection(user_id=user_id password=password, profile=profile, org=org, guest=guest)
+    c			= ebscopy.Connection(user_id=user_id, password=password, profile=profile, org=org, guest=guest)
     c.connect()
     info		= c.info_data
     c.disconnect()
@@ -31,12 +32,12 @@ class ExplicitConnectionTests(unittest.TestCase):
       c.connect()
 
   def test_missing_user_explicit_connection_breaks(self):
-    with self.assertRaises(HTTPError):
+    with self.assertRaises(ValueError):
       c			= ebscopy.Connection(user_id="", password="", profile="", org="", guest="n")
       c.connect()
 
   def test_implict_connection_breaks(self):
-    with self.assertRaises(HTTPError):
+    with self.assertRaises(ValueError):
       c			= ebscopy.Connection()
       c.connect()
 
