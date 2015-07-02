@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
   name='ebscopy',
-  version='0.0.2.a',
+  version='0.0.3',
   author='Jesse Jensen',
   author_email='jjensen@ebsco.com',
   url='https://github.com/jessejensen/ebscopy',
