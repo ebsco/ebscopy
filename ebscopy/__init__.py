@@ -3,7 +3,6 @@
 import os
 import logging 
 from ebscopy import *
-from config import *
 
 log_levels			= {
 					'DEBUG':	logging.DEBUG,
