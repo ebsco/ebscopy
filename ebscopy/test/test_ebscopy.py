@@ -4,22 +4,35 @@ from ebscopy import ebscopy
 import unittest
 from requests import HTTPError
 import os
+import re
 
 class ExplicitConnectionTests(unittest.TestCase):
+  # We want to strip out any environment variables so they don't get used
   def setUp(self):
-    self.old_os_env_user	= os.getenv("EDS_USER")
-    os.environ["EDS_USER"]	= ""
+    self.environ		= {}
+    for env, value in os.environ.items():
+       if re.match("EDS_", env):
+         self.environ[env]	= value
+         os.environ[env]	= ""
 
-
+  # Gotta put them back!
   def tearDown(self):
-    os.environ["EDS_USER"]	= self.old_os_env_user
+    for env, value in self.environ.items():
+      os.environ[env]		= value
+
+  def test_for_env_variables(self):
+    self.assertGreater(len(os.environ['EDS_USER']), 0)
+    self.assertGreater(len(os.environ['EDS_PASS']), 0)
+    self.assertGreater(len(os.environ['EDS_PROFILE']), 0)
+    self.assertGreater(len(os.environ['EDS_ORG']), 0)
+    self.assertGreater(len(os.environ['EDS_GUEST']), 0)
 
   def test_good_explicit_connection_works(self):
-    user_id		= self.old_os_env_user
-    password		= os.getenv("EDS_PASS")
-    profile		= os.getenv("EDS_PROFILE")
-    org			= os.getenv("EDS_ORG")
-    guest		= os.getenv("EDS_GUEST")
+    user_id		= self.environ.get("EDS_USER")
+    password		= self.environ.get("EDS_PASS")
+    profile		= self.environ.get("EDS_PROFILE")
+    org			= self.environ.get("EDS_ORG")
+    guest		= self.environ.get("EDS_GUEST")
     c			= ebscopy.Connection(user_id=user_id, password=password, profile=profile, org=org, guest=guest)
     c.connect()
     info		= c.info_data
@@ -40,6 +53,7 @@ class ExplicitConnectionTests(unittest.TestCase):
     with self.assertRaises(ValueError):
       c			= ebscopy.Connection()
       c.connect()
+# End of [ExplicitConnectionTests] class
 
 class ImplicitConnectionTests(unittest.TestCase):
   def test_implicit_connection_works(self):
@@ -49,46 +63,30 @@ class ImplicitConnectionTests(unittest.TestCase):
     c.disconnect()
     self.assertIsNotNone(info)
 
+   # TODO: Do we need to test that an implicit connection with bad env variables doesn't work? I don't think so...
 
-   
+# End of [ImplicitConnectionTests] class
 
-#connection	= ebscopy.Connection()
-#connection.connect()
-#results = connection.search("blue")
-#print "---------------"
-#print "Search Results"
-#print "---------------"
-#results.pprint()
-#print "---------------"
-#print "Total Hits:"
-#print results.stat_total_hits
-#print "---------------"
-#print "Available Facets:"
-#print results.avail_facets_labels
-#print "---------------"
-#print 
-#
-#record = connection.retrieve(results.record[0])
-#print "---------------"
-#print "Simple Call for Record Info"
-#print "---------------"
-#record.pprint()
-#print "---------------"
-#
-#record = connection.retrieve((results.simple_records[0]['DbId'], results.simple_records[0]['An']), highlight=["blue"])
-#print "---------------"
-#print "Record Info with Highlight"
-#print "---------------"
-#record.pprint()
-#print "---------------"
-#
-#record = connection.retrieve((results.simple_records[0]['DbId'], results.simple_records[0]['An']))
-#print "---------------"
-#print "Record Info without Highlight"
-#print "---------------"
-#record.pprint()
-#print "---------------"
-#
-#connection.disconnect()
-#
-##
+class SearchTests(unittest.TestCase):
+  def test_search_results(self):
+    c			= ebscopy.Connection()
+    c.connect()
+    res			= c.search("blue")
+    c.disconnect()
+
+    self.assertGreater(res.stat_total_hits, 0)
+    self.assertGreater(res.stat_total_time, 0)
+    self.assertGreater(len(res.avail_facets_labels), 0)
+
+    rec			= c.retrieve(res.record[0])
+
+    self.assertIsInstance(rec.dbid, str)
+    self.assertIsInstance(rec.an, str)
+    self.assertIsInstance(rec.plink, str)
+    self.assertIsInstance(rec.plink, str)
+    self.assertRegexpMatches(rec.plink, "^http://")
+    
+
+# End of [SearchTests] class
+
+# EOF
