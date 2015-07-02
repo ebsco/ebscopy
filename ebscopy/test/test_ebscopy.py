@@ -6,6 +6,14 @@ from requests import HTTPError
 import os
 import re
 
+class EnvironmentIsGoodTests(unittest.TestCase):
+  def test_for_env_variables(self):
+    self.assertGreater(len(os.environ['EDS_USER']), 0)
+    self.assertGreater(len(os.environ['EDS_PASS']), 0)
+    self.assertGreater(len(os.environ['EDS_PROFILE']), 0)
+    self.assertGreater(len(os.environ['EDS_ORG']), 0)
+    self.assertGreater(len(os.environ['EDS_GUEST']), 0)
+
 class ExplicitConnectionTests(unittest.TestCase):
   # We want to strip out any environment variables so they don't get used
   def setUp(self):
@@ -19,13 +27,6 @@ class ExplicitConnectionTests(unittest.TestCase):
   def tearDown(self):
     for env, value in self.environ.items():
       os.environ[env]		= value
-
-  def test_for_env_variables(self):
-    self.assertGreater(len(os.environ['EDS_USER']), 0)
-    self.assertGreater(len(os.environ['EDS_PASS']), 0)
-    self.assertGreater(len(os.environ['EDS_PROFILE']), 0)
-    self.assertGreater(len(os.environ['EDS_ORG']), 0)
-    self.assertGreater(len(os.environ['EDS_GUEST']), 0)
 
   def test_good_explicit_connection_works(self):
     user_id		= self.environ.get("EDS_USER")
@@ -72,20 +73,21 @@ class SearchTests(unittest.TestCase):
     c			= ebscopy.Connection()
     c.connect()
     res			= c.search("blue")
-    c.disconnect()
 
     self.assertGreater(res.stat_total_hits, 0)
     self.assertGreater(res.stat_total_time, 0)
     self.assertGreater(len(res.avail_facets_labels), 0)
+    self.assertIsInstance(res.record[0], tuple)
 
     rec			= c.retrieve(res.record[0])
 
-    self.assertIsInstance(rec.dbid, str)
-    self.assertIsInstance(rec.an, str)
-    self.assertIsInstance(rec.plink, str)
-    self.assertIsInstance(rec.plink, str)
+    self.assertIsInstance(rec, ebscopy.Record)
+    self.assertIsInstance(rec.dbid, (unicode, str))
+    self.assertIsInstance(rec.an, (unicode, str))
+    self.assertIsInstance(rec.plink, (unicode, str))
     self.assertRegexpMatches(rec.plink, "^http://")
     
+    c.disconnect()
 
 # End of [SearchTests] class
 
