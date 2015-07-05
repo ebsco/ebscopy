@@ -4,8 +4,7 @@
 The official Python wrapper for the EBSCO Discovery Service API.
 
 # Usage
-```
-python
+```python
 import ebscopy
 
 connection = ebscopy.Connection(user_id="user", password="pass", profile="profile", org="org", guest="n")
