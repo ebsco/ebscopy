@@ -107,4 +107,28 @@ class RecordTests(unittest.TestCase):
 
     c.disconnect()
 
+
+class MultiSessionTest(untittest.TestCase):
+  def test_sessions(self):
+    s1			= ebscopy.Session()
+    s2			= ebscopy.Session()
+
+    self.assertNotEqual(s1, s2)
+
+    r1			= s1.search("blue")
+    r2			= s2.search("blue")
+
+    self.assertEqual(r1, r2)
+
+    r3			= s1.search("red")
+    r4			= s1.search("green")
+
+    self.assertNotEqual(r3, r4)
+
+    s1.close()
+
+    # Assert that s2 is still good...
+    r5			= s2.search("blue")
+    # so r5 should be legit here
+
 # EOF
