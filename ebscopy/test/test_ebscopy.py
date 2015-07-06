@@ -88,7 +88,23 @@ class SearchTests(unittest.TestCase):
     self.assertRegexpMatches(rec.plink, "^http://")
     
     c.disconnect()
-
 # End of [SearchTests] class
+
+
+class RecordTests(unittest.TestCase):
+  def test_record_equality(self):
+    c			= ebscopy.Connection()
+    c.connect()
+    res			= c.search("blue")
+
+    rec_a		= c.retrieve(res.record[0])
+    rec_b		= c.retrieve(res.record[0])
+    rec_c		= c.retrieve(res.record[1])
+
+    self.assertEqual(rec_a, rec_a)
+    self.assertEqual(rec_a, rec_b)
+    self.assertNotEqual(rec_a, rec_c)
+
+    c.disconnect()
 
 # EOF
