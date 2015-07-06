@@ -331,6 +331,20 @@ class Record:
     self.simple_title		= ""
     self.simple_author		= ""
 
+  def __eq__(self, other):
+    if isinstance(other, Record):
+      return self.an == other.an and self.dbid == other.dbid
+    else:
+      return NotImplemented
+   # End of [__eq__] function
+
+  def __ne__(self, other):
+    result = self.__eq__(other)
+    if result is NotImplemented:
+      return result
+    else:
+      return not result
+
   def load(self, data):
     self.dbid			= data["Record"]["Header"]["DbId"]
     self.an			= data["Record"]["Header"]["An"]
