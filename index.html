@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=640">
+
+    <link rel="stylesheet" href="stylesheets/core.css" media="screen">
+    <link rel="stylesheet" href="stylesheets/mobile.css" media="handheld, only screen and (max-device-width:640px)">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+
+    <script type="text/javascript" src="javascripts/modernizr.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="javascripts/headsmart.min.js"></script>
+    <script type="text/javascript">
+      $(document).ready(function () {
+        $('#main_content').headsmart()
+      })
+    </script>
+    <title>ebscopy by jessejensen</title>
+  </head>
+
+  <body>
+    <a id="forkme_banner" href="https://github.com/jessejensen/ebscopy">View on GitHub</a>
+    <div class="shell">
+
+      <header>
+        <span class="ribbon-outer">
+          <span class="ribbon-inner">
+            <h1>ebscopy</h1>
+            <h2>The official Python wrapper for the EBSCO Discovery Service API</h2>
+          </span>
+          <span class="left-tail"></span>
+          <span class="right-tail"></span>
+        </span>
+      </header>
+
+      <section id="downloads">
+        <span class="inner">
+          <a href="https://github.com/jessejensen/ebscopy/zipball/master" class="zip"><em>download</em> .ZIP</a><a href="https://github.com/jessejensen/ebscopy/tarball/master" class="tgz"><em>download</em> .TGZ</a>
+        </span>
+      </section>
+
+
+      <span class="banner-fix"></span>
+
+
+      <section id="main_content">
+        <h1>
+<a id="ebscopy" class="anchor" href="#ebscopy" aria-hidden="true"><span class="octicon octicon-link"></span></a>ebscopy</h1>
+
+<p>(/ˈɛbskoʊˌpaɪ/, not /ˈɛbskɒpiː/)</p>
+
+<p>The official Python wrapper for the EBSCO Discovery Service API.</p>
+
+<h1>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h1>
+
+<div class="highlight highlight-python"><pre><span class="pl-k">import</span> ebscopy
+
+connection <span class="pl-k">=</span> ebscopy.Connection(<span class="pl-smi">user_id</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span>, <span class="pl-smi">password</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>pass<span class="pl-pds">"</span></span>, <span class="pl-smi">profile</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>profile<span class="pl-pds">"</span></span>, <span class="pl-smi">org</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>org<span class="pl-pds">"</span></span>, <span class="pl-smi">guest</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>n<span class="pl-pds">"</span></span>)
+connection.connect()
+results <span class="pl-k">=</span> connection.search(<span class="pl-s"><span class="pl-pds">"</span>blue<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">print</span> <span class="pl-s"><span class="pl-pds">"</span>Search Results<span class="pl-pds">"</span></span>
+<span class="pl-k">print</span> <span class="pl-s"><span class="pl-pds">"</span>---------------<span class="pl-pds">"</span></span>
+results.pprint()
+
+<span class="pl-k">print</span> <span class="pl-s"><span class="pl-pds">"</span>Total Hits:<span class="pl-pds">"</span></span>
+<span class="pl-k">print</span> results.stat_total_hits
+
+<span class="pl-k">print</span> <span class="pl-s"><span class="pl-pds">"</span>Available Facets:<span class="pl-pds">"</span></span>
+<span class="pl-k">print</span> results.avail_facets_labels
+
+connection.disconnect()</pre></div>
+
+<h1>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h1>
+
+<ul>
+<li>See <a href="docs/INSTALL.md">INSTALL.md</a>
+</li>
+</ul>
+
+<h1>
+<a id="notes" class="anchor" href="#notes" aria-hidden="true"><span class="octicon octicon-link"></span></a>Notes</h1>
+
+<h1>
+<a id="links" class="anchor" href="#links" aria-hidden="true"><span class="octicon octicon-link"></span></a>Links</h1>
+
+<ul>
+<li><a href="http://eds-api.ebscohost.com/Console">http://eds-api.ebscohost.com/Console</a></li>
+<li><a href="http://edswiki.ebscohost.com/EBSCO_Discovery_Service_API_User_Guide">http://edswiki.ebscohost.com/EBSCO_Discovery_Service_API_User_Guide</a></li>
+</ul>
+
+<h1>
+<a id="thanks" class="anchor" href="#thanks" aria-hidden="true"><span class="octicon octicon-link"></span></a>Thanks</h1>
+
+<p>Thanks to:</p>
+
+<ul>
+<li>EBSCO Information Services</li>
+<li>Dave Edwards - for hiring me</li>
+<li>Ron Burns - for letting Dave hire me</li>
+<li>Eric Frierson - for showing me how the API works</li>
+<li>Nitin Arora - for making the case for a Python EDS API wrapper and writing the original PyEDS</li>
+</ul>
+      </section>
+
+      <footer>
+        <span class="ribbon-outer">
+          <span class="ribbon-inner">
+            <p>this project by <a href="https://github.com/jessejensen">jessejensen</a> can be found on <a href="https://github.com/jessejensen/ebscopy">GitHub</a></p>
+          </span>
+          <span class="left-tail"></span>
+          <span class="right-tail"></span>
+        </span>
+        <p>Generated with <a href="https://pages.github.com">GitHub Pages</a> using Merlot</p>
+        <span class="octocat"></span>
+      </footer>
+
+    </div>
+
+    
+  </body>
+</html>
