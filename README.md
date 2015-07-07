@@ -33,7 +33,6 @@ connection.disconnect()
 * [EDS API Wiki](http://edswiki.ebscohost.com/EBSCO_Discovery_Service_API_User_Guide)
 
 # Thanks
-Thanks to:
 * [EBSCO Information Services](https://www.ebsco.com/)
 * *Dave Edwards* - for hiring me
 * *Ron Burns* - for letting Dave hire me

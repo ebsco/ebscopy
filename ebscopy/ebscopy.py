@@ -8,7 +8,6 @@ import json					# Manage data
 import os					# Get ENV variables with auth info
 import requests					# Does the heavy HTTP lifting
 from datetime import datetime, timedelta	# Monitor authentication timeout
-import inspect					# For debugging
 import logging					# Smart logging
 import re					# Strip highlighting
 
