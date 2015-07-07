@@ -1,5 +1,5 @@
 # ebscopy
-(/ˈɛbskoʊˌpaɪ/, not /ˈɛbskɒpiː/)
+(*/ˈɛbskoʊˌpaɪ/,* not /ˈ*ɛbskɒpiː/*)
 
 The official Python wrapper for the EBSCO Discovery Service API.
 
@@ -27,16 +27,15 @@ connection.disconnect()
 # Installation
 * See [INSTALL.md](docs/INSTALL.md)
 
-# Notes
-
 # Links
-* http://eds-api.ebscohost.com/Console
-* http://edswiki.ebscohost.com/EBSCO_Discovery_Service_API_User_Guide
+* [EBSCO Discovery](https://www.ebscohost.com/discovery)
+* [EDS API Console](http://eds-api.ebscohost.com/Console)
+* [EDS API Wiki](http://edswiki.ebscohost.com/EBSCO_Discovery_Service_API_User_Guide)
 
 # Thanks
 Thanks to:
-* EBSCO Information Services
-* Dave Edwards - for hiring me
-* Ron Burns - for letting Dave hire me
-* Eric Frierson - for showing me how the API works
-* Nitin Arora - for making the case for a Python EDS API wrapper and writing the original PyEDS
+* [EBSCO Information Services](https://www.ebsco.com/)
+* *Dave Edwards* - for hiring me
+* *Ron Burns* - for letting Dave hire me
+* *Eric Frierson* - for showing me how the API works
+* *Nitin Arora* - for making the case for a Python EDS API wrapper and writing the original PyEDS
