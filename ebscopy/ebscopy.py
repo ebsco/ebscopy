@@ -12,6 +12,7 @@ import inspect					# For debugging
 import logging					# Smart logging
 import re					# Strip highlighting
 
+
 # Take text with highlight tagging, remove the highlight tags but save the locations
 # TODO: this assumes only one highlight in string; what if more?
 def _parse_highlight(text):
@@ -49,18 +50,86 @@ def _get_item_data(items, name):
 
 
 # Connection object
+# Don't use manually, is used by Session objects
 # Create with credentials and settings, then call connect()
-# TODO: Support multiple connections?
 class Connection:
 
-  # Initialize Connection object with auth and config info
-  def __init__(self, user_id="", password="", profile="", org="", guest="" ):
+  # Initialize Connection object with blank values (mostly)
+  def __init__(self):
+    self.user_id		= ""
+    self.password		= ""
+    self.profile		= ""
+    self.org			= ""
+    self.guest			= ""
+    #global __version__
+    self.interface_id		= "ebscopy"
+    #self.interface_id		= "ebscopy %s" % (__version__)
+    self.connected		= False
+  # End of [__init__] function
+
+  # Internal method to generate an HTTP request 
+  def request(self, session_token, method, data):
+    valid_methods		= frozenset(["CreateSession", "Info", "Search", "Retrieve", "EndSession", "UIDAuth", "SearchCriteria"])
+    if method not in valid_methods:
+      raise ValueError("Unknown API method requested")
+
+    data_json			= json.dumps(data)
+    logging.debug("JSON data being sent: %s", data_json)
+    base_host			= "https://eds-api.ebscohost.com"
+    base_path			= ""
+    base_url			= ""
+    full_url			= ""
+
+    if method == "UIDAuth":
+      base_path			= "/authservice/rest/"
+    else:
+      base_path			= "/edsapi/rest/"
+
+    full_url			= base_host + base_path + method
+    logging.debug("Full URL: %s", full_url)
+
+    headers			= {'Content-Type': 'application/json', 'Accept': 'application/json'}
+
+    try:
+      headers['x-authenticationToken']	= self.auth_token
+    except:
+      if method is not "UIDAuth":
+        raise ValueError("Missing Authentication Token!")
+      
+    try:
+      headers['x-sessionToken']		= session_token
+    except:
+      if method not in ("UIDAuth", "CreateSession"):
+        raise ValueError("Missing Session Token!")
+
+    logging.debug("Request headers: %s", headers)
+
+    r				= requests.post(full_url, data=data_json, headers=headers)
+    logging.debug("Request response object: %s", r)
+
+    code			= r.status_code
+    if code is not 200:
+      if code is 400 and method not in ("UIDAuth", "CreateSession"):
+        logging.debug("Session died?!?!")
+        #TODO: Probably a timeout issue, need to recover
+  	# 400 error, invalid session token
+  	#  Receive JSON:
+  	#    {"DetailedErrorDescription":"Invalid Session Token. Please generate a new one.","ErrorDescription":"Session Token Invalid","ErrorNumber":"109"}
+      else:
+        logging.debug("Error text: %s", r.text)
+        r.raise_for_status()
+
+    # This should be a dict now...?
+    return r.json()
+  # End of [request] function
+
+  # Actually connect to the API by doing an authorization
+  def connect(self, user_id="", password="", profile="", org="", guest=""):
     self.user_id		= user_id
     self.password		= password
     self.profile		= profile
     self.org			= org
     self.guest			= guest
-    self.interface_id		= 'ebscopy'
 
     if not self.user_id:
       if os.environ.get('EDS_USER'):
@@ -97,95 +166,66 @@ class Connection:
     logging.debug("Profile: %s", self.profile)
     logging.debug("Org: %s", self.org)
     logging.debug("Guest: %s", self.guest)
-  # End of [__init__] function
 
-  # Internal method to generate an HTTP request 
-  def __request(self, method, data):
-    valid_methods		= frozenset(["CreateSession", "Info", "Search", "Retrieve", "EndSession", "UIDAuth", "SearchCriteria"])
-    if method not in valid_methods:
-      raise ValueError("Unknown API method requested")
-
-    data_json			= json.dumps(data)
-    logging.debug("JSON data being sent: %s", data_json)
-    base_host			= "https://eds-api.ebscohost.com"
-    base_path			= ""
-    base_url			= ""
-    full_url			= ""
-
-    if method == "UIDAuth":
-      base_path			= "/authservice/rest/"
-    else:
-      base_path			= "/edsapi/rest/"
-
-    full_url			= base_host + base_path + method
-    logging.debug("Full URL: %s", full_url)
-
-    headers			= {'Content-Type': 'application/json', 'Accept': 'application/json'}
-
-    #if self.auth_token:
-    try:
-      headers['x-authenticationToken']	= self.auth_token
-    #elif method is not "UIDAuth":
-    except:
-      if method is not "UIDAuth":
-        raise ValueError("Missing Authentication Token!")
-      
-    #if self.session_token:
-    try:
-      headers['x-sessionToken']		= self.session_token
-    except:
-      if method not in ("UIDAuth", "CreateSession"):
-        raise ValueError("Missing Session Token!")
-
-    logging.debug("Request headers: %s", headers)
-
-    r				= requests.post(full_url, data=data_json, headers=headers)
-    logging.debug("Request response object: %s", r)
-
-    code			= r.status_code
-    if code is not 200:
-      if code is 400 and method not in ("UIDAuth", "CreateSession"):
-        logging.debug("Session died?!?!")
-        #TODO: Probably a timeout issue, need to recover
-  	# 400 error, invalid session token
-  	#  Receive JSON:
-  	#    {"DetailedErrorDescription":"Invalid Session Token. Please generate a new one.","ErrorDescription":"Session Token Invalid","ErrorNumber":"109"}
-      else:
-        logging.debug("Error text: %s", r.text)
-        r.raise_for_status()
-
-    # This should be a dict now...?
-    return r.json()
-  # End of [__request] function
-
-  # Actually connect to the API, doing an authorization, create session, and get info
-  def connect(self):
     # Do UIDAuth
     auth_data			= {
 					"UserId":	self.user_id,
 					"Password":	self.password,
 					"InterfaceId":	self.interface_id
 			  	}
-    auth_response		= self.__request("UIDAuth", auth_data)
+    auth_response		= self.request("", "UIDAuth", auth_data)
     logging.debug("UIDAuth response: %s", auth_response)
 
     self.auth_token		= auth_response["AuthToken"]
     self.auth_timeout		= auth_response["AuthTimeout"]
     self.auth_timeout_time	= datetime.now() + timedelta(seconds=int(self.auth_timeout))
 
-    # Do CreateSession
+    if self.auth_token:
+      self.connected		= True
+
+    return
+  # End of [connect] function
+
+  # Create a Session by hitting the API and returning a session token
+  def create_session(self, user_id="", password="", profile="", org="", guest="" ):
     create_data			= {
 					"Profile":	self.profile,
 					"Guest":	self.guest,
 					"Org":		self.org
 				}
 
-    create_response		= self.__request("CreateSession", create_data)
+    create_response		= self.request("", "CreateSession", create_data)
     logging.debug("CreateSession response: %s", create_response)
 
-    self.session_token		= create_response["SessionToken"]
+    return create_response["SessionToken"]
+  # End of [create_session] function
 
-    # Do Info
+# End of [Connection] class
+
+
+class Session:
+  def __init__(self, profile="", org="", guest="", user_id="", password=""):
+
+    # Required for Session
+    self.profile		= profile
+    self.org			= org
+    self.guest			= guest
+
+    # Optional, could be handled by Connection
+    self.user_id		= user_id
+    self.password		= password
+
+    global CONNECTION
+    if not CONNECTION.connected:
+      CONNECTION.connect(user_id, password)
+
+    self.auth_token		= CONNECTION.auth_token
+    self.connection		= CONNECTION.auth_token
+    self.auth_timeout_time	= CONNECTION.auth_timeout_time
+
+    self.session_token		= CONNECTION.create_session(profile, org, guest)
+
+    # Get Info from API, just in case
     info_data			= {}
 
     info_response		= self.__request("Info", info_data)
@@ -193,9 +233,25 @@ class Connection:
     self.info_data		= info_response
 	# TODO: catch SessionTimeout?
 
-    return 
-  # End of [connect] function
+  # End of [__init__] function
 
+  def __request(self, method, data):
+    return CONNECTION.request(self.session_token, method, data)
+  # End of [__request] function
+
+  def __eq__(self, other):
+    if isinstance(other, Session):
+      return self.session_token == other.session_token
+    else:
+      return NotImplemented
+   # End of [__eq__] function
+
+  def __ne__(self, other):
+    result = self.__eq__(other)
+    if result is NotImplemented:
+      return result
+    else:
+      return not result
 
   # Do a search
   def search(self, query, mode="all", sort="relevance", inc_facets="y", view="brief", rpp=20, page=1, highlight="y"):
@@ -253,16 +309,17 @@ class Connection:
     return record
   # End of [retrieve] function
 
-  # Disconnect the connection
-  def disconnect(self):
+  # End the Session
+  def end(self):
     end_data			= {
 					"SessionToken": self.session_token
 				  }
     end_response		= self.__request("EndSession", end_data)
     logging.debug("EndSession response: %s", end_response)
     return
-  # End of [disconnect] function
-# End of [Connection] class
+  # End of [end] function
+# End of [Session] class
+
 
 # Results object returned by Search request
 class Results:
@@ -280,11 +337,27 @@ class Results:
     self.records_raw		= []		# List of raw Records straight from JSON
     self.record			= []		# List of DbId/An tuples
 
+  def __eq__(self, other):
+    if isinstance(other, Results):
+      return self.search_criteria == other.search_criteria and self.stat_total_hits == other.stat_total_hits
+    else:
+      return NotImplemented
+   # End of [__eq__] function
+
+  def __ne__(self, other):
+    result = self.__eq__(other)
+    if result is NotImplemented:
+      return result
+    else:
+      return not result
+
   # Load with dict
   def load(self, data):
     self.stat_total_hits	= data["SearchResult"]["Statistics"]["TotalHits"]
     self.stat_total_time	= data["SearchResult"]["Statistics"]["TotalSearchTime"]
     self.stat_databases_raw	= data["SearchResult"]["Statistics"]["Databases"]
+
+    self.search_criteria	= data["SearchRequest"]["SearchCriteria"]
 
     self.avail_facets_raw	= data["SearchResult"]["AvailableFacets"]
     for facet in data["SearchResult"]["AvailableFacets"]:
@@ -303,6 +376,7 @@ class Results:
       # TODO: add fulltext true/false
       self.simple_records.append(simple_rec)
       self.record.append((record["Header"]["DbId"], record["Header"]["An"])) 
+    return
   # End of load function
 
   def pprint(self):
@@ -312,10 +386,7 @@ class Results:
       print("DbId: %s" % record["DbId"])
       print("An: %s" % record["An"])
       print
-    #pprint.pprint(self.simple_records)
-    
-    
-
+    return
 # End of Results class
 
 
@@ -356,6 +427,7 @@ class Record:
     # TODO: generate simple values for all possiblities
     self.simple_title		= _get_item_data(data["Record"]["Items"], "Title")
     self.simple_author		= _get_item_data(data["Record"]["Items"], "Author")
+    return
 
   def pprint(self):
     print("Title: %s"	% self.simple_title)
@@ -364,8 +436,9 @@ class Record:
     print("DbId: %s"	% self.dbid)
     print("An: %s"	% self.an)
     print
-    
+    return
 # End of Record class
 
+CONNECTION			= Connection()
 
 #EOF

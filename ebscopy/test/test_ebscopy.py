@@ -106,14 +106,16 @@ class RecordTests(unittest.TestCase):
     self.assertNotEqual(rec_a, rec_c)
 
     c.disconnect()
+# End of [RecordTests] class
 
-
-class MultiSessionTest(untittest.TestCase):
+class MultiSessionTest(unittest.TestCase):
   def test_sessions(self):
     s1			= ebscopy.Session()
     s2			= ebscopy.Session()
 
     self.assertNotEqual(s1, s2)
+
+    self.assertEqual(s1.connection, s2.connection)
 
     r1			= s1.search("blue")
     r2			= s2.search("blue")
@@ -125,10 +127,17 @@ class MultiSessionTest(untittest.TestCase):
 
     self.assertNotEqual(r3, r4)
 
-    s1.close()
+    s1.end()
 
-    # Assert that s2 is still good...
     r5			= s2.search("blue")
-    # so r5 should be legit here
+    self.assertEqual(r1, r5)
+
+    s2.end()
+
+    with self.assertRaises(HTTPError):
+      r5		= s2.search("blue")
+
+
+# End of [MultiSessionTest] class
 
 # EOF

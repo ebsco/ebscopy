@@ -1,8 +1,10 @@
 # ebscopy __init__
 
 import os
+#import os.path
 import logging 
 from ebscopy import *
+from pkg_resources import get_distribution, DistributionNotFound
 
 log_levels			= {
 					'DEBUG':	logging.DEBUG,
@@ -22,5 +24,23 @@ logging.basicConfig(
 			level=log_level,
 			format='%(asctime)s %(levelname)s %(module)s.%(funcName)s: %(message)s'
 )
+
+#global CONNECTION		
+#CONNECTION			= ebscopy.Connection()
+#print CONNECTION
+
+try: 
+  _dist				= get_distribution("ebscopy")
+  dist_loc			= os.path.normcase(_dist.location)
+  here				= os.path_normcase(__file__)
+  if not here.startswith(os.path.join(dist_loc, "ebscopy")):
+    raise DistributionNotFound
+except DistributionNotFound:
+  __version__ 			= 0
+else:
+  __version__			= _dist.version
+
+logging.info("Version is %s" % __version__)
+
 
 #EOF
