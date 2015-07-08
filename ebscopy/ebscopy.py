@@ -209,10 +209,13 @@ class _ConnectionPool(Borg):
     connection			= _Connection(self.new_user_id, self.new_password)	# The Connection object
 
     for item in self.pool:
+      logging.debug("Connection Pool Item: %s", item)
       if item == connection:
+        logging.debug("Connection Pool Item Matched: %s", item)
         connection		= item
         break
     else: # no break
+      logging.debug("Connection Pool Items Didn't Match")
       connection.connect()
       self.pool.append(connection)
 
@@ -243,7 +246,7 @@ class Session:
 
     # Get Info from API, just in case
     info_response		= self.__request("Info", {})
-    logging.debug("Info response: %s", info_response)
+    #logging.debug("Info response: %s", info_response)
     self.info_data		= info_response
 	# TODO: catch SessionTimeout here?
 	# "ApplicationSettings":{ "SessionTimeout":"480"
