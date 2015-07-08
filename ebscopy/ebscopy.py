@@ -1,6 +1,6 @@
 # ebscopy.py
 
-# To Do:
+# TODO:
 #	be able to use IP
 #	close on destroy
 
@@ -11,6 +11,7 @@ from datetime import datetime, timedelta	# Monitor authentication timeout
 import logging					# Smart logging
 import re					# Strip highlighting
 
+### Helper Functions
 
 # Take text with highlight tagging, remove the highlight tags but save the locations
 # TODO: this assumes only one highlight in string; what if more?
@@ -36,8 +37,9 @@ def _parse_highlight(text):
   return output
 # End of [_parse_highlight] function
 
-
 # Get the "Data" component of a named item from an arbitrarily sorted JSON list
+# TODO: Do we need this? 
+# TODO: Use group instead of name?
 def _get_item_data(items, name):
   dictionary			= next((item for item in items if item["Name"] == name), None)
   if dictionary:
@@ -47,23 +49,49 @@ def _get_item_data(items, name):
     return None
 # End of [_get_item_data] function
 
+# Use a credential value or get it from the OS environment
+def _use_or_get(kind, value=""):
+  kind_env_map			= {
+					"user_id":	"EDS_USER",
+					"password":	"EDS_PASS",
+					"profile":	"EDS_PROFILE",
+					"org":		"EDS_ORG",
+					"guest":	"EDS_GUEST",
+				}
+  if not value:
+    env				= kind_env_map[kind]
+    if os.environ.get(env):
+      value			= os.environ[env]
+    elif kind == "guest":
+      value			= "n"
+    else:
+      raise ValueError("Could not find value for %s in passed parameters or OS environment (%s)" % (kind, env))
+
+  return value
+# End of [_use_or_get] function
+
+
+### Classes
+
+# Alex Martelli's Borg; used by _ConnectionPool
+# http://www.aleax.it/5ep.html
+class Borg:
+  _shared_state = {}
+  def __init__(self):
+    self.__dict__ = self._shared_state
 
 # Connection object
-# Don't use manually, is used by Session objects
+# Don't use manually, created by ConnectionPool
 # Create with credentials and settings, then call connect()
-class Connection:
+class _Connection:
 
   # Initialize Connection object with blank values (mostly)
-  def __init__(self):
-    self.user_id		= ""
-    self.password		= ""
-    self.profile		= ""
-    self.org			= ""
-    self.guest			= ""
-    #global __version__
+  def __init__(self, user_id, password):
+    self.user_id		= user_id
+    self.password		= password
     self.interface_id		= "ebscopy"
+    # TODO: Get __version__ working consistently
     #self.interface_id		= "ebscopy %s" % (__version__)
-    self.connected		= False
   # End of [__init__] function
 
   # Internal method to generate an HTTP request 
@@ -123,48 +151,11 @@ class Connection:
   # End of [request] function
 
   # Actually connect to the API by doing an authorization
-  def connect(self, user_id="", password="", profile="", org="", guest=""):
-    self.user_id		= user_id
-    self.password		= password
-    self.profile		= profile
-    self.org			= org
-    self.guest			= guest
-
-    if not self.user_id:
-      if os.environ.get('EDS_USER'):
-        self.user_id		= os.environ['EDS_USER']
-      else:
-        raise ValueError("Could not find value for user_id in passed parameters or OS environment")
-
-    if not self.password:
-      if os.environ.get('EDS_PASS'):
-        self.password		= os.environ['EDS_PASS']
-      else:
-        raise ValueError("Could not find value for password in passed parameters or OS environment")
-
-    if not self.profile:
-      if os.environ.get('EDS_PROFILE'):
-        self.profile		= os.environ['EDS_PROFILE']
-      else:
-        raise ValueError("Could not find value for profile in passed parameters or OS environment")
-
-    if not self.org:
-      if os.environ.get('EDS_ORG'):
-        self.org		= os.environ['EDS_ORG']
-      else:
-        raise ValueError("Could not find value for org in passed parameters or OS environment")
-
-    if not self.guest:
-      if os.environ.get('EDS_GUEST'):
-        self.guest		= os.environ['EDS_GUEST']
-      else:
-        self.guest		= "n"
+  def connect(self):
 
     logging.debug("UserID: %s", self.user_id)
     logging.debug("Password: %s", self.password)
-    logging.debug("Profile: %s", self.profile)
-    logging.debug("Org: %s", self.org)
-    logging.debug("Guest: %s", self.guest)
+    logging.debug("InterfaceId: %s", self.interface_id)
 
     # Do UIDAuth
     auth_data			= {
@@ -179,18 +170,19 @@ class Connection:
     self.auth_timeout		= auth_response["AuthTimeout"]
     self.auth_timeout_time	= datetime.now() + timedelta(seconds=int(self.auth_timeout))
 
-    if self.auth_token:
-      self.connected		= True
+    if not self.auth_token:
+      raise ValueError
 
     return
   # End of [connect] function
 
   # Create a Session by hitting the API and returning a session token
-  def create_session(self, user_id="", password="", profile="", org="", guest="" ):
+  # The parameters should have been vetted by the Session object that called this
+  def create_session(self, profile="", org="", guest=""):
     create_data			= {
-					"Profile":	self.profile,
-					"Guest":	self.guest,
-					"Org":		self.org
+					"Profile":	profile,
+					"Guest":	guest,
+					"Org":		org
 				}
 
     create_response		= self.request("", "CreateSession", create_data)
@@ -199,43 +191,66 @@ class Connection:
     return create_response["SessionToken"]
   # End of [create_session] function
 
-# End of [Connection] class
+        # Things that could go wrong:
+        # 	* Connection not connected:	it should connect itself using env variables or passed user/pass
+        # 	* Bad credentials: 		Connection's problem
+# End of [_Connection] class
 
+class _ConnectionPool(Borg):
+  def __init__(self):
+    Borg.__init__(self)			# Share state in case somebody creates another ConnectionPool
+    self.pool			= []	# The list of Connection objects
+
+  # Provide a _Connection:
+  # If one exists with same credentials, give it, otherwise make it and give it
+  def get(self, user_id="", password=""):
+    self.new_user_id		= _use_or_get("user_id", user_id)
+    self.new_password		= _use_or_get("password", password)
+    connection			= _Connection(self.new_user_id, self.new_password)	# The Connection object
+
+    for item in self.pool:
+      if item == connection:
+        connection		= item
+        break
+    else: # no break
+      connection.connect()
+      self.pool.append(connection)
+
+    return connection
+  # End of [get] function
+# End of [_ConnectionPool] class
 
 class Session:
-  def __init__(self, profile="", org="", guest="", user_id="", password=""):
+  def __init__(self, connection=None, profile="", org="", guest="", user_id="", password=""):
+
+    if connection:
+      self.connection		= connection
+    else:
+      self.connection		= POOL.get(user_id, password)
 
     # Required for Session
-    self.profile		= profile
-    self.org			= org
-    self.guest			= guest
+    self.profile		= _use_or_get("profile", profile)
+    self.org			= _use_or_get("org", org)
+    self.guest			= _use_or_get("guest", guest)
 
-    # Optional, could be handled by Connection
-    self.user_id		= user_id
-    self.password		= password
+    self.session_token		= self.connection.create_session(self.profile, self.org, self.guest)
 
-    global CONNECTION
-    if not CONNECTION.connected:
-      CONNECTION.connect(user_id, password)
 
-    self.auth_token		= CONNECTION.auth_token
-    self.connection		= CONNECTION.auth_token
-    self.auth_timeout_time	= CONNECTION.auth_timeout_time
-
-    self.session_token		= CONNECTION.create_session(profile, org, guest)
+    # TODO: Delete? Session shouldn't care about this stuff
+    #self.auth_token		= connection.auth_token
+    #self.connection		= connection.auth_token
+    #self.auth_timeout_time	= connection.auth_timeout_time
 
     # Get Info from API, just in case
-    info_data			= {}
-
-    info_response		= self.__request("Info", info_data)
+    info_response		= self.__request("Info", {})
     logging.debug("Info response: %s", info_response)
     self.info_data		= info_response
-	# TODO: catch SessionTimeout?
-
+	# TODO: catch SessionTimeout here?
+	# "ApplicationSettings":{ "SessionTimeout":"480"
   # End of [__init__] function
 
   def __request(self, method, data):
-    return CONNECTION.request(self.session_token, method, data)
+    return self.connection.request(self.session_token, method, data)
   # End of [__request] function
 
   def __eq__(self, other):
@@ -438,6 +453,7 @@ class Record:
     return
 # End of Record class
 
-CONNECTION			= Connection()
+# The shared Connection Pool
+POOL			= _ConnectionPool()
 
 #EOF
