@@ -23,7 +23,7 @@ except:
 # Regular setup data
 setup(
 	name							= 'ebscopy',
-	version							= '0.0.5.dev2',
+	version							= '0.0.6',
 	author							= 'Jesse Jensen',
 	author_email					= 'jjensen@ebsco.com',
 	url								= 'https://github.com/jessejensen/ebscopy',
@@ -34,13 +34,8 @@ setup(
 	long_description				= ld,
 	install_requires				= [
 										"datetime",
-										"json",
 										"logging",
-										"os",
-										"pkg_resources",
-										"re",
 										"requests",
-										"unittest",
 									],
 )
 

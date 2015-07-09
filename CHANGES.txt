@@ -1,3 +1,5 @@
-v0.0.1.dev0, 2015-06-23 -- Initial release.
-v0.0.2.dev0, 2015-06-30 -- Packaging.
-v0.0.2.dev1, 2015-06-30 -- Typo in description.
+v0.0.1, 2015-06-23 -- Initial release.
+v0.0.2, 2015-06-30 -- Packaging.
+v0.0.5, 2015-07-09 -- Refactored to have Sessions that get a Connection from the POOL
+v0.0.6, 2015-07-09 -- Actually working with pip
+
