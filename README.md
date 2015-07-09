@@ -23,7 +23,6 @@ print results.avail_facets_labels
 
 connection.disconnect()
 ```
-
 # Installation
 * See [INSTALL.md](docs/INSTALL.md)
 
@@ -31,6 +30,9 @@ connection.disconnect()
 * [EBSCO Discovery](https://www.ebscohost.com/discovery)
 * [EDS API Console](http://eds-api.ebscohost.com/Console)
 * [EDS API Wiki](http://edswiki.ebscohost.com/EBSCO_Discovery_Service_API_User_Guide)
+
+# Notes
+* I use four-space tabs. Sorry if that offends anyone.
 
 # Thanks
 * [EBSCO Information Services](https://www.ebsco.com/)
