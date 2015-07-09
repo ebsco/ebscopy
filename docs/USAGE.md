@@ -10,12 +10,12 @@ The API requires some credentials and parameters to accept connections. These ca
 
 * Implicit credentials:
 ```python
-s		= Session()
+s = Session()
 ```
 
 * Explicit credentials:
 ```python
-s		= Session(user_id="user", password="pass", profile="profile", org="org", guest="n")
+s = Session(user_id="user", password="pass", profile="profile", org="org", guest="n")
 ```
 
 
@@ -24,13 +24,13 @@ Sessions are the main interface to the API. Creating a Session will implicitly m
 
 * Session with implicit Connection:
 ```python
-s		= Session()
+s = Session()
 ```
 
 * Session with explicit Connection:
 ```python
-c		= POOL.get()
-s		= Session(connection=c)
+c = POOL.get()
+s = Session(connection=c)
 ```
 
 ## Search Results
@@ -38,8 +38,8 @@ Performing a search in a Session will return a Results object. This contains the
 
 * Searching
 ```python
-s		= Session()
-r		= s.search("blue")
+s = Session()
+r = s.search("blue")
 ```
 
 * Pretty printing
