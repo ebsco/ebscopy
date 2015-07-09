@@ -90,9 +90,9 @@ class _Connection:
 		self.user_id						= user_id
 		self.password						= password
 		self.userpass						= (user_id, password)
-		self.interface_id					= "ebscopy"
+		#self.interface_id					= "ebscopy"
 		# TODO: Get __version__ working consistently
-		#self.interface_id					= "ebscopy %s" % (__version__)
+		self.interface_id					= "ebscopy %s" % (ebscopy.__version__)
 	# End of [__init__] function
 
 	# Internal method to generate an HTTP request 
