@@ -4,27 +4,26 @@
 The official Python wrapper for the EBSCO Discovery Service API.
 
 # Usage
+* Basic:
 ```python
 import ebscopy
 
-connection = ebscopy.Connection(user_id="user", password="pass", profile="profile", org="org", guest="n")
-connection.connect()
-results = connection.search("blue")
+session = ebscopy.Session(user_id="user", password="pass", profile="profile", org="org", guest="n")
+results = session.search("blue")
 
-print "Search Results"
-print "---------------"
+print("Total Hits: %s" % results.stat_total_hits)
 results.pprint()
 
-print "Total Hits:"
-print results.stat_total_hits
-
-print "Available Facets:"
-print results.avail_facets_labels
-
-connection.disconnect()
+session.end()
 ```
+* Advanced: [USAGE.md](docs/USAGE.md)
+
 # Installation
-* See [INSTALL.md](docs/INSTALL.md)
+* Basic:
+```python
+pip install ebscopy
+```
+* Advanced: [INSTALL.md](docs/INSTALL.md)
 
 # Links
 * [EBSCO Discovery](https://www.ebscohost.com/discovery)

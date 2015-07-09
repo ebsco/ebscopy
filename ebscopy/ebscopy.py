@@ -397,12 +397,15 @@ class Results:
 	# End of load function
 
 	def pprint(self):
+		print "Search Results"
+		print "---------------"
 		for record in self.simple_records:
 			print("Title: %s" % record["Title"])
 			print("PLink: %s" % record["PLink"])
 			print("DbId: %s" % record["DbId"])
 			print("An: %s" % record["An"])
 			print
+		print "---------------"
 		return
 # End of Results class
 

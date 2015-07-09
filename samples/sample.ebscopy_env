@@ -1,7 +1,9 @@
 # Sample environment file for ebscopy
-# If the Connection object is not initiliazed with login settings, it will try to pull them from the user's environment
-# To use, source this file into your environment, either manually or at login:
-# . ~/.ebscopy_env
+# If the Session or Connection object is not initiliazed with login settings, it will try to pull them from the user's environment
+# To use, copy this file to your home directory as .ebscopy_env:
+# 	cp sample.ebscopy_env ~/.ebscopy_env 
+# Then source it into your environment, either manually or automatically:
+# 	. ~/.ebscopy_env
 
 # Controls the type of authentication
 # ip : Use IP authentication
