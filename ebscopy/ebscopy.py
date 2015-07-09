@@ -73,7 +73,7 @@ def _use_or_get(kind, value=""):
 
 ### Classes
 
-# Alex Martelli's Borg; used by _ConnectionPool
+# Alex Martelli's Borg; used by ConnectionPool
 # http://www.aleax.it/5ep.html
 class Borg:
   _shared_state = {}
@@ -85,10 +85,11 @@ class Borg:
 # Create with credentials and settings, then call connect()
 class _Connection:
 
-  # Initialize Connection object with blank values (mostly)
+  # ConnectionPool should give us safe values when initializing
   def __init__(self, user_id, password):
     self.user_id		= user_id
     self.password		= password
+    self.userpass		= (user_id, password)
     self.interface_id		= "ebscopy"
     # TODO: Get __version__ working consistently
     #self.interface_id		= "ebscopy %s" % (__version__)
@@ -196,7 +197,7 @@ class _Connection:
         # 	* Bad credentials: 		Connection's problem
 # End of [_Connection] class
 
-class _ConnectionPool(Borg):
+class ConnectionPool(Borg):
   def __init__(self):
     Borg.__init__(self)			# Share state in case somebody creates another ConnectionPool
     self.pool			= []	# The list of Connection objects
@@ -210,7 +211,7 @@ class _ConnectionPool(Borg):
 
     for item in self.pool:
       logging.debug("Connection Pool Item: %s", item)
-      if item == connection:
+      if item.userpass == connection.userpass:
         logging.debug("Connection Pool Item Matched: %s", item)
         connection		= item
         break
@@ -221,7 +222,12 @@ class _ConnectionPool(Borg):
 
     return connection
   # End of [get] function
-# End of [_ConnectionPool] class
+
+  def __len__(self):
+    return len(self.pool)
+  # End of [len] function
+
+# End of [ConnectionPool] class
 
 class Session:
   def __init__(self, connection=None, profile="", org="", guest="", user_id="", password=""):
@@ -457,6 +463,6 @@ class Record:
 # End of Record class
 
 # The shared Connection Pool
-POOL			= _ConnectionPool()
+POOL			= ConnectionPool()
 
 #EOF

@@ -1,4 +1,11 @@
 #!/usr/bin/python
+#
+# Test suite for ebscopy
+#
+# TODO?
+# Create second Session object with specific user/pass and no Connection object
+# Do we need to test that an implicit connection with bad env variables doesn't work? I don't think so...
+# 
 
 from ebscopy import ebscopy
 import unittest
@@ -6,6 +13,7 @@ from requests import HTTPError
 import os
 import re
 
+# We need these ENV variables to exist for testing
 class EnvironmentIsGoodTests(unittest.TestCase):
   def test_for_env_variables(self):
     self.assertGreater(len(os.environ['EDS_USER']), 0)
@@ -14,28 +22,6 @@ class EnvironmentIsGoodTests(unittest.TestCase):
     self.assertGreater(len(os.environ['EDS_ORG']), 0)
     self.assertGreater(len(os.environ['EDS_GUEST']), 0)
 # End of [EnvironmentIsGoodTests] class
-
-# TODO: Types of connections...
-#
-# Create first Session object with env var user/pass and no Connection object
-# Create first Session object with specific user/pass and no Connection object
-#
-# Create second Session object with env var user/pass and no Connection object
-# Create second Session object with specific user/pass and no Connection object
-#
-# Manually get a Connection object...
-#
-# Create first Session object with passed Connection object
-# 
-# Create second Session object with passed Connection object
-# 
-#####
-# sess	= Session()
-# sess	= Session(profile, etc)
-# sess	= Session(user, password, profile)
-# sess	= Session(Connection, profile)
-
-# TODO: Do we need to test that an implicit connection with bad env variables doesn't work? I don't think so...
 
 # The simplest creation method
 # While we're doing it, might as well get some basic two-session stuff out of the way
@@ -103,8 +89,27 @@ class CreateSessionsWithParameters(unittest.TestCase):
       sess_1		= ebscopy.Session()
 # End of [CreateSessionsWithParameters] class
 
+class CreateConnectionFirst(unittest.TestCase):
+  def test_sessions_via_connections(self):
+    self.assertEqual(len(ebscopy.POOL), 0)				# Pool should start empty
+    conn_a		= ebscopy.POOL.get()				# Can I get a new implicit connection from the pool?
+    self.assertIsInstance(conn_a, ebscopy._Connection)			
+    sess_1		= ebscopy.Session(connection=conn_a)		# Can I make a session with the object?
+    self.assertIsInstance(sess_1, ebscopy.Session)
+    info_1		= sess_1.info_data
+    self.assertIsNotNone(info_1)
+    sess_2		= ebscopy.Session(connection=conn_a)		# Can I make another session with the same object?
+    self.assertNotEqual(sess_1, sess_2)					# These sessions should be different
+    conn_b		= ebscopy.POOL.get()
+    self.assertIsInstance(conn_b, ebscopy._Connection)
+    self.assertEqual(len(ebscopy.POOL), 1)				# Pool should only have the one _Connection
+    self.assertEqual(conn_a, conn_b)					# ConnectionPool should have given the existing _Connection
+    sess_1.end()
+    sess_2.end()
+  # End of [test_sessions_via_connections] function
+# End of [CreateConnectionFirst] class
 
-class SearchTests(unittest.TestCase):
+class Search(unittest.TestCase):
   def test_search_results(self):
     sess		= ebscopy.Session()
     res			= sess.search("yellow")
@@ -125,7 +130,6 @@ class SearchTests(unittest.TestCase):
     sess.end()
 # End of [SearchTests] class
 
-
 class RecordTests(unittest.TestCase):
   def test_record_equality(self):
     sess		= ebscopy.Session()
@@ -136,9 +140,9 @@ class RecordTests(unittest.TestCase):
     rec_1_b		= sess.retrieve(res.record[1])
     rec_2		= sess.retrieve(res.record[2])
 
-    self.assertEqual(rec_0, rec_0)				# Test identity
-    self.assertEqual(rec_1_a, rec_1_b)				# Test two equal objects
-    self.assertNotEqual(rec_0, rec_2)				# Test two different objects
+    self.assertEqual(rec_0, rec_0)					# Test identity
+    self.assertEqual(rec_1_a, rec_1_b)					# Test two equal objects
+    self.assertNotEqual(rec_0, rec_2)					# Test two different objects
 
     sess.end()
 # End of [RecordTests] class
