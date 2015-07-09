@@ -5,6 +5,7 @@ The official Python wrapper for the EBSCO Discovery Service API.
 
 # Usage
 * Basic:
+
 ```python
 import ebscopy
 
@@ -16,13 +17,16 @@ results.pprint()
 
 session.end()
 ```
+
 * Advanced: [USAGE.md](docs/USAGE.md)
 
 # Installation
 * Basic:
+
 ```python
 pip install ebscopy
 ```
+
 * Advanced: [INSTALL.md](docs/INSTALL.md)
 
 # Links
