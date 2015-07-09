@@ -65,7 +65,8 @@ Successfully installed datetime-4.0.1 ebscopy-0.0.2.dev4 logging-0.4.9.6 nose-1.
 (py279)$ 
 ```
 
-## Create the environment file with connection info (use sample.ebscopy_env, if needed)
+## Create the environment file with connection info 
+Use sample.ebscopy_env, if needed.
 ```python
 (py279)$ vi .ebscopy_env
 export EDS_AUTH=user
