@@ -1,6 +1,6 @@
 # How to Install
 
-1. Create a `virtualenv`:
+## Create a `virtualenv`
 ```python
 $ virtualenv py279
 New python executable in py279/bin/python2.7
@@ -9,13 +9,13 @@ Installing setuptools, pip...done.
 $ 
 ```
 
-2. Activate the `virtualenv`:
+## Activate the `virtualenv`:
 ```python
 $  . py279/bin/activate
 (py279)$ 
 ```
 
-3. Use `pip` to install `ebscopy` (and its dependencies):
+## Use `pip` to install `ebscopy` (and its dependencies):
 ```python
 (py279)$ pip install ebscopy
 You are using pip version 6.0.8, however version 7.1.0 is available.
@@ -65,7 +65,7 @@ Successfully installed datetime-4.0.1 ebscopy-0.0.2.dev4 logging-0.4.9.6 nose-1.
 (py279)$ 
 ```
 
-4. Create the environment file with connection info (use sample.ebscopy_env, if needed):
+## Create the environment file with connection info (use sample.ebscopy_env, if needed):
 ```python
 (py279)$ vi .ebscopy_env
 export EDS_AUTH=user
@@ -80,13 +80,13 @@ export EDS_LOG_LEVEL=INFO
 ~
 ```
 
-5. Source the environment file:
+## Source the environment file:
 ```python
 (py279)$ . ~/.ebscopy_env
 (py279)$ 
 ```
 
-6. Test:
+## Test:
 ```python
 (py279)$ python          
 Python 2.7.9 (default, Apr  1 2015, 18:18:03) 
@@ -110,4 +110,4 @@ An: uoc.9965828
 ...
 ```
 
-7. Celebrate!
+## Celebrate!
