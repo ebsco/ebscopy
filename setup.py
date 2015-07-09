@@ -2,6 +2,7 @@ from setuptools import setup, find_packages
 import re
 
 # README.md is used as the long description by default
+ld									= ""
 ld_md								= open('README.md').read()
 
 # If pandoc is installed and working, we can translate README.md directly to reStructuredText and use it for the long description
@@ -16,13 +17,13 @@ try:
 	doc.markdown					= ld_md
 	ld								= doc.rst
 except:
-	ldw								= ld_md
+	ld								= ld_md
 # End of pandoc README translation attempt
 
 # Regular setup data
 setup(
 	name							= 'ebscopy',
-	version							= '0.0.4',
+	version							= '0.0.5.dev2',
 	author							= 'Jesse Jensen',
 	author_email					= 'jjensen@ebsco.com',
 	url								= 'https://github.com/jessejensen/ebscopy',
