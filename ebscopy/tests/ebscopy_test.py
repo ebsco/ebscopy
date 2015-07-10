@@ -157,6 +157,7 @@ class TimeoutTests(unittest.TestCase):
 
 		timeout_time					= conn.auth_timeout_time
 		sleeptime						= timeout_time - datetime.now()
+		print sleeptime
 
 		time.sleep(sleeptime.seconds)
 		time.sleep(60)

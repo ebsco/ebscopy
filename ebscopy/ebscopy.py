@@ -95,7 +95,7 @@ class _Connection:
 	# End of [__init__] function
 
 	# Internal method to generate an HTTP request 
-	def request(self, session_token, method, data):
+	def request(self, session_token, method, data, attempt=0):
 		valid_methods						= frozenset(["CreateSession", "Info", "Search", "Retrieve", "EndSession", "UIDAuth", "SearchCriteria"])
 		if method not in valid_methods:
 			raise ValueError("Unknown API method requested")
@@ -106,6 +106,10 @@ class _Connection:
 		base_path							= ""
 		base_url							= ""
 		full_url							= ""
+
+		attempt								+= 1
+		if attempt > 2:
+			raise HTTPError("Unable to acquire target lock!")
 
 		if method == "UIDAuth":
 			base_path						= "/authservice/rest/"
@@ -131,27 +135,28 @@ class _Connection:
 
 		logging.debug("Request headers: %s", headers)
 
-		r									= requests.post(full_url, data=data_json, headers=headers)
-		logging.debug("Request response object: %s", r)
-
-		code								= r.status_code
-		if code is not 200:
-			if code is 400 and method not in ("UIDAuth", "CreateSession"):
-				logging.debug("Session died?!?!")
-				#TODO: Probably a timeout issue, need to recover
-	# 400 error, invalid session token
-	#  Receive JSON:
-	#    {"DetailedErrorDescription":"Invalid Session Token. Please generate a new one.","ErrorDescription":"Session Token Invalid","ErrorNumber":"109"}
-			else:
-				logging.debug("Error text: %s", r.text)
-				r.raise_for_status()
-
-		# This should be a dict now...?
+		try:
+			r								= requests.post(full_url, data=data_json, headers=headers)
+			r.raise_for_status()
+		except:
+			logging.debug("Request attempt: %s", attempt)
+			logging.debug("Method: %s", method)
+			logging.debug("Code: %s", r.status_code)
+			logging.debug("Request response object: %s", r)
+			logging.debug("Error text: %s", r.text)
+			# TODO: What about errors other than Auth? Can I recover from them?
+			self.connect()
+			self.request(session_token, method, data, attempt)
+	
+	
 		return r.json()
 	# End of [request] function
 
 	# Actually connect to the API by doing an authorization
 	def connect(self):
+	
+		# I think this is okay. Safe for new connects, and no need for a reconnect wrapper function to do it.
+		self.auth_token					= None
 
 		logging.debug("UserID: %s", self.user_id)
 		logging.debug("Password: %s", self.password)

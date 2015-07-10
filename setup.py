@@ -23,7 +23,7 @@ except:
 # Regular setup data
 setup(
 	name							= 'ebscopy',
-	version							= '0.0.7',
+	version							= '0.0.8',
 	author							= 'Jesse Jensen',
 	author_email					= 'jjensen@ebsco.com',
 	url								= 'https://github.com/jessejensen/ebscopy',
@@ -36,6 +36,12 @@ setup(
 										"datetime",
 										"logging",
 										"requests",
+									],
+	data_files						= [ 
+										("ebscopy/samples", 
+											["samples/sample.ebscopy_env", "samples/plain_old_test.py"]),
+										 ("ebscopy/docs", 
+											["docs/INSTALL.md", "docs/USAGE.md"]) 
 									],
 )
 
