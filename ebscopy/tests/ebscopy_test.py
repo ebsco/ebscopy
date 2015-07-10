@@ -12,6 +12,8 @@ import unittest
 from requests import HTTPError
 import os
 import re
+import time
+from datetime import datetime
 
 # We need these ENV variables to exist for testing
 class EnvironmentIsGoodTests(unittest.TestCase):
@@ -147,4 +149,18 @@ class RecordTests(unittest.TestCase):
 		sess.end()
 # End of [RecordTests] class
 
+class TimeoutTests(unittest.TestCase):
+	def test_auth_timeout(self):
+		conn							= ebscopy.POOL.get()
+		sess							= ebscopy.Session(connection=conn)
+		res_purple						= sess.search("purple")
+
+		timeout_time					= conn.auth_timeout_time
+		sleeptime						= timeout_time - datetime.now()
+
+		time.sleep(sleeptime.seconds)
+		time.sleep(60)
+
+		res_violet						= sess.search("violet")
+		
 # EOF

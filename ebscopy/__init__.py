@@ -24,6 +24,6 @@ logging.basicConfig(
 	format='%(asctime)s %(levelname)s %(module)s.%(funcName)s: %(message)s'
 )
 
-__version__ = get_distribution('ebscopy').version
+#__version__ = get_distribution('ebscopy').version
 
 #EOF
