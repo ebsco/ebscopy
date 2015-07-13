@@ -7,7 +7,7 @@
 # Do we need to test that an implicit connection with bad env variables doesn't work? I don't think so...
 # 
 
-from ebscopy import ebscopy
+from ebscopy import *
 import unittest
 from requests import HTTPError
 import os
@@ -43,7 +43,7 @@ class CreateSessionsWithENV(unittest.TestCase):
 		res_1_green							= sess_1.search("green")
 		self.assertNotEqual(res_1_blue, res_1_green)
 		sess_1.end()
-		with self.assertRaises(HTTPError):
+		with self.assertRaises(SessionError):								# Explicitly ended, so don't try to recreate
 			res_1_red						= sess_1.search("red")
 		res_2_green							= sess_2.search("green")
 		self.assertEqual(res_1_green, res_2_green)
@@ -79,7 +79,7 @@ class CreateSessionsWithParameters(unittest.TestCase):
 		self.assertIsNotNone(info_1)
 
 	def test_bad_explicit_connection_breaks(self):
-		with self.assertRaises(HTTPError):
+		with self.assertRaises(ebscopy.AuthenticationError):
 			sess_1							= ebscopy.Session(user_id="betternotwork", password="betternotwork", profile="betternotwork", org="betternotwork", guest="n")
 
 	def test_missing_user_explicit_connection_breaks(self):
@@ -157,7 +157,6 @@ class TimeoutTests(unittest.TestCase):
 
 		timeout_time					= conn.auth_timeout_time
 		sleeptime						= timeout_time - datetime.now()
-		print sleeptime
 
 		time.sleep(sleeptime.seconds)
 		time.sleep(60)

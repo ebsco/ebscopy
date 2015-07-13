@@ -6,7 +6,7 @@
 
 import json																	# Manage data
 import os																	# Get ENV variables with auth info
-import requests																# Does the heavy HTTP lifting
+from requests import HTTPError, post										# Does the heavy HTTP lifting
 from datetime import datetime, timedelta									# Monitor authentication timeout
 import logging																# Smart logging
 import re																	# Strip highlighting
@@ -45,7 +45,7 @@ def _get_item_data(items, name):
 	if dictionary:
 		return dictionary["Data"]
 	else:
-		logging.warn("No match for %s in items!", name)
+		logging.warn("_get_item_data: No match for %s in items!", name)
 		return None
 # End of [_get_item_data] function
 
@@ -80,6 +80,12 @@ class Borg:
 	def __init__(self):
 		self.__dict__ 						= self._shared_state
 
+class AuthenticationError(Exception):
+    pass
+
+class SessionError(Exception):
+    pass
+
 # Connection object
 # Don't use manually, created by ConnectionPool
 # Create with credentials and settings, then call connect()
@@ -90,18 +96,18 @@ class _Connection:
 		self.user_id						= user_id
 		self.password						= password
 		self.userpass						= (user_id, password)
-		#self.interface_id					= "ebscopy %s" % (ebscopy.__version__)
+		#self.interface_id					= "ebscopy %s" % (__version__)
 		self.interface_id					= "ebscopy %s" % 0
 	# End of [__init__] function
 
 	# Internal method to generate an HTTP request 
-	def request(self, session_token, method, data, attempt=0):
+	def request(self, method, data, session_token=None, attempt=0):
 		valid_methods						= frozenset(["CreateSession", "Info", "Search", "Retrieve", "EndSession", "UIDAuth", "SearchCriteria"])
 		if method not in valid_methods:
-			raise ValueError("Unknown API method requested")
+			raise ValueError("Unknown API method requested!")
 
 		data_json							= json.dumps(data)
-		logging.debug("JSON data being sent: %s", data_json)
+		logging.debug("_Connection.request: JSON data being sent: %s", data_json)
 		base_host							= "https://eds-api.ebscohost.com"
 		base_path							= ""
 		base_url							= ""
@@ -117,7 +123,7 @@ class _Connection:
 			base_path						= "/edsapi/rest/"
 
 		full_url							= base_host + base_path + method
-		logging.debug("Full URL: %s", full_url)
+		logging.debug("_Connection.request: Full URL: %s", full_url)
 
 		headers								= {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
@@ -133,20 +139,33 @@ class _Connection:
 			if method not in ("UIDAuth", "CreateSession"):
 				raise ValueError("Missing Session Token!")
 
-		logging.debug("Request headers: %s", headers)
+		logging.debug("_Connection.request: Request headers: %s", headers)
+
+		r									= post(full_url, data=data_json, headers=headers)
 
 		try:
-			r								= requests.post(full_url, data=data_json, headers=headers)
 			r.raise_for_status()
 		except:
-			logging.debug("Request attempt: %s", attempt)
-			logging.debug("Method: %s", method)
-			logging.debug("Code: %s", r.status_code)
-			logging.debug("Request response object: %s", r)
-			logging.debug("Error text: %s", r.text)
-			# TODO: What about errors other than Auth? Can I recover from them?
-			self.connect()
-			self.request(session_token, method, data, attempt)
+			logging.debug("_Connection.request: Request attempt: %s", attempt)
+			logging.debug("_Connection.request: Method: %s", method)
+			logging.debug("_Connection.request: Code: %s", r.status_code)
+			logging.debug("_Connection.request: Request response object: %s", r)
+			logging.debug("_Connection.request: Error text: %s", r.text)
+
+			if r.json().get("ErrorNumber") in ("104", "107"):							# Authentication Token Invalid or Missing
+				logging.debug("_Connection.request: Bad AuthToken, trying to get another.")
+				self.connect()
+				logging.debug("_Connection.request: Rerunning original request.")
+				return self.request(method, data, session_token, attempt)
+			elif r.json().get("ErrorNumber") in ("108", "109"):							# Session Token Missing or Invalid
+				logging.debug("_Connection.request: Bad Session, raising SessionError.")
+				raise SessionError
+			elif r.json().get("ErrorCode") == 1102:										# ErrorCode is an integer, not a string
+				raise AuthenticationError("Invalid credentials!")
+			elif r.json().get("ErrorCode") == 1103:										# ErrorCode is an integer, not a string
+				raise AuthenticationError("No valid profiles found for customer/group combination.")
+			else:
+				raise HTTPError("Unexpected error from server!")
 	
 	
 		return r.json()
@@ -158,9 +177,9 @@ class _Connection:
 		# I think this is okay. Safe for new connects, and no need for a reconnect wrapper function to do it.
 		self.auth_token					= None
 
-		logging.debug("UserID: %s", self.user_id)
-		logging.debug("Password: %s", self.password)
-		logging.debug("InterfaceId: %s", self.interface_id)
+		logging.debug("_Connection.connect: UserID: %s", self.user_id)
+		logging.debug("_Connection.connect: Password: %s", self.password)
+		logging.debug("_Connection.connect: InterfaceId: %s", self.interface_id)
 
 		# Do UIDAuth
 		auth_data							= {
@@ -168,15 +187,15 @@ class _Connection:
 					"Password":	self.password,
 					"InterfaceId":	self.interface_id
 			  	}
-		auth_response						= self.request("", "UIDAuth", auth_data)
-		logging.debug("UIDAuth response: %s", auth_response)
+		auth_response						= self.request("UIDAuth", auth_data)
+		logging.debug("_Connection.connect: UIDAuth response: %s", auth_response)
 
 		self.auth_token						= auth_response["AuthToken"]
 		self.auth_timeout					= auth_response["AuthTimeout"]
 		self.auth_timeout_time				= datetime.now() + timedelta(seconds=int(self.auth_timeout))
 
 		if not self.auth_token:
-			raise ValueError
+			raise AuthenticationError("Didn't get AuthToken from API?!")
 
 		return
 	# End of [connect] function
@@ -190,8 +209,8 @@ class _Connection:
 												"Org":		org
 											}
 
-		create_response						= self.request("", "CreateSession", create_data)
-		logging.debug("CreateSession response: %s", create_response)
+		create_response						= self.request("CreateSession", create_data)
+		logging.debug("_Connection.create_session: Response: %s", create_response)
 
 		return create_response["SessionToken"]
 	# End of [create_session] function
@@ -206,6 +225,7 @@ class ConnectionPool(Borg):
 		Borg.__init__(self)													# Share state with another ConnectionPool
 		self.pool							= []							# The list of Connection objects
 
+
 	# Provide a _Connection:
 	# If one exists with same credentials, give it, otherwise make it and give it
 	def get(self, user_id="", password=""):
@@ -214,13 +234,13 @@ class ConnectionPool(Borg):
 		connection							= _Connection(self.new_user_id, self.new_password)	# The Connection object
 
 		for item in self.pool:
-			logging.debug("Connection Pool Item: %s", item)
+			logging.debug("ConnectionPool.get: Item: %s", item)
 			if item.userpass == connection.userpass:
-				logging.debug("Connection Pool Item Matched: %s", item)
+				logging.debug("ConnectionPool.get: Item Matched: %s", item)
 				connection					= item
 				break
 		else: # no break
-			logging.debug("Connection Pool Items Didn't Match")
+			logging.debug("ConnectionPool.get: No Items Matched!")
 			connection.connect()
 			self.pool.append(connection)
 
@@ -247,18 +267,31 @@ class Session:
 		self.guest							= _use_or_get("guest", guest)
 
 		self.session_token					= self.connection.create_session(self.profile, self.org, self.guest)
+		if self.session_token:
+			self.active							= True
+		else:
+			self.active							= False
+			raise SessionError("No Session Token received from API!")
+
 
 		# Get Info from API; used by tests
 		# TODO: parse some of this out
 		# TODO: catch SessionTimeout here?
 		#	 "ApplicationSettings":{ "SessionTimeout":"480"
-		info_response						= self.__request("Info", {})
+		info_response						= self._request("Info", {})
 		self.info_data						= info_response
 	# End of [__init__] function
 
-	def __request(self, method, data):
-		return self.connection.request(self.session_token, method, data)
-	# End of [__request] function
+	def _request(self, method, data):
+		if not self.active:
+			raise SessionError("This session is not active (probably explicitly closed)!")
+		try:
+			return self.connection.request(method, data, self.session_token)
+		except SessionError:
+			logging.warn("Session._request: Problem with Session, trying to start another!")
+			self.session_token				= self.connection.create_session(self.profile, self.org, self.guest)
+			return self.connection.request(method, data, self.session_token)
+	# End of [_request] function
 
 	def __eq__(self, other):
 		if isinstance(other, Session):
@@ -297,11 +330,11 @@ class Session:
 												"Actions":				None
 												}
 
-		logging.debug("Search data: %s", search_data)
+		logging.debug("Session.search: Request data: %s", search_data)
 
-		search_response						= self.__request("Search", search_data)
+		search_response						= self._request("Search", search_data)
 
-		logging.debug("Search response: %s", search_response)
+		logging.debug("Session.search: Response: %s", search_response)
 
 		results								= Results()
 		results.load(search_response)
@@ -318,11 +351,11 @@ class Session:
 					"EbookPreferredFormat": ebook
 				}
 
-		logging.debug("Retrieve data: %s", retrieve_data)
+		logging.debug("Session.retrieve: Request data: %s", retrieve_data)
 
-		retrieve_response					= self.__request("Retrieve", retrieve_data)
+		retrieve_response					= self._request("Retrieve", retrieve_data)
 
-		logging.debug("Retrieve response: %s", retrieve_response)
+		logging.debug("Session.retrieve: Response: %s", retrieve_response)
 
 		record								= Record()
 		record.load(retrieve_response)
@@ -335,8 +368,13 @@ class Session:
 		end_data							= {
 					"SessionToken": self.session_token
 				  }
-		end_response						= self.__request("EndSession", end_data)
-		logging.debug("EndSession response: %s", end_response)
+		end_response						= self._request("EndSession", end_data)
+
+		if end_response["IsSuccessful"] == "y": 
+			self.active							= False
+		else:
+			logging.warn("Session.end: Unsuccessful! Response: %s", end_response)
+
 		return
 	# End of [end] function
 # End of [Session] class
