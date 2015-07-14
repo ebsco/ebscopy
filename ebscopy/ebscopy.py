@@ -10,6 +10,7 @@ from requests import HTTPError, post										# Does the heavy HTTP lifting
 from datetime import datetime, timedelta									# Monitor authentication timeout
 import logging																# Smart logging
 import re																	# Strip highlighting
+from pkg_resources import get_distribution
 
 ### Helper Functions
 
@@ -96,8 +97,8 @@ class _Connection:
 		self.user_id						= user_id
 		self.password						= password
 		self.userpass						= (user_id, password)
-		#self.interface_id					= "ebscopy %s" % (__version__)
-		self.interface_id					= "ebscopy %s" % 0
+		self.interface_id					= "ebscopy %s" % (_version)
+		#self.interface_id					= "ebscopy %s" % 0
 	# End of [__init__] function
 
 	# Internal method to generate an HTTP request 
@@ -153,12 +154,12 @@ class _Connection:
 			logging.debug("_Connection.request: Error text: %s", r.text)
 
 			if r.json().get("ErrorNumber") in ("104", "107"):							# Authentication Token Invalid or Missing
-				logging.debug("_Connection.request: Bad AuthToken, trying to get another.")
+				logging.warn("_Connection.request: Bad AuthToken, trying to get another.")
 				self.connect()
-				logging.debug("_Connection.request: Rerunning original request.")
+				logging.warn("_Connection.request: Rerunning original request.")
 				return self.request(method, data, session_token, attempt)
 			elif r.json().get("ErrorNumber") in ("108", "109"):							# Session Token Missing or Invalid
-				logging.debug("_Connection.request: Bad Session, raising SessionError.")
+				logging.warn("_Connection.request: Bad Session, raising SessionError.")
 				raise SessionError
 			elif r.json().get("ErrorCode") == 1102:										# ErrorCode is an integer, not a string
 				raise AuthenticationError("Invalid credentials!")
@@ -202,7 +203,7 @@ class _Connection:
 
 	# Create a Session by hitting the API and returning a session token
 	# The parameters should have been vetted by the Session object that called this
-	def create_session(self, profile="", org="", guest=""):
+	def _create_session(self, profile="", org="", guest=""):
 		create_data							= {
 												"Profile":	profile,
 												"Guest":	guest,
@@ -210,14 +211,10 @@ class _Connection:
 											}
 
 		create_response						= self.request("CreateSession", create_data)
-		logging.debug("_Connection.create_session: Response: %s", create_response)
+		logging.debug("_Connection._create_session: Response: %s", create_response)
 
 		return create_response["SessionToken"]
-	# End of [create_session] function
-
-				# Things that could go wrong:
-				# 	* Connection not connected:	it should connect itself using env variables or passed user/pass
-				# 	* Bad credentials: 		Connection's problem
+	# End of [_create_session] function
 # End of [_Connection] class
 
 class ConnectionPool(Borg):
@@ -266,7 +263,7 @@ class Session:
 		self.org							= _use_or_get("org", org)
 		self.guest							= _use_or_get("guest", guest)
 
-		self.session_token					= self.connection.create_session(self.profile, self.org, self.guest)
+		self.session_token					= self.connection._create_session(self.profile, self.org, self.guest)
 		if self.session_token:
 			self.active							= True
 		else:
@@ -289,7 +286,7 @@ class Session:
 			return self.connection.request(method, data, self.session_token)
 		except SessionError:
 			logging.warn("Session._request: Problem with Session, trying to start another!")
-			self.session_token				= self.connection.create_session(self.profile, self.org, self.guest)
+			self.session_token				= self.connection._create_session(self.profile, self.org, self.guest)
 			return self.connection.request(method, data, self.session_token)
 	# End of [_request] function
 
@@ -500,6 +497,8 @@ class Record:
 		print
 		return
 # End of Record class
+
+_version = get_distribution('ebscopy').version
 
 # The shared Connection Pool
 POOL										= ConnectionPool()
