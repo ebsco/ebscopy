@@ -13,14 +13,15 @@ try:
 	# Pandoc chokes on Unicode characters, which are used in the pronuncation guide
 	ld_md							= re.sub("\(\*.*\*\)", "(*/'ebskOu,pai/*, not */'ebskopi:/*)", ld_md, re.M)
 
-except:
 	ld								= pypandoc.convert(ld_md, "rst", format="md")
+except:
+	ld								= ld_md
 # End of pandoc README translation attempt
 
 # Regular setup data
 setup(
 	name							= 'ebscopy',
-	version							= '0.0.10',
+	version							= '0.0.11',
 	author							= 'Jesse Jensen',
 	author_email					= 'jjensen@ebsco.com',
 	url								= 'https://github.com/jessejensen/ebscopy',
