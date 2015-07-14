@@ -153,7 +153,7 @@ class _Connection:
 		:param string session_token: optional Session Token to include in header
 		:param int attempt: optional counter of request attempts
 		:returns: response from API
-		:rtype dict
+		:rtype: dict
 		"""
 		valid_methods						= frozenset(["CreateSession", "Info", "Search", "Retrieve", "EndSession", "UIDAuth", "SearchCriteria"])
 		if method not in valid_methods:
@@ -265,7 +265,7 @@ class _Connection:
 		:param string org: Arbitrary text for reporting 
 		:param string guest: Treat the user as a guest or authenticated (n* | y)
 		:returns: SessionToken
-		:rtype string
+		:rtype: string
 		"""
 		create_data							= {
 												"Profile":	profile,
@@ -300,7 +300,7 @@ class ConnectionPool(Borg):
 		:param string user_id: API user_id
 		:param string password: API password
 		:returns: _Connection object
-		:rtype :class:`ebscopy._Connection`
+		:rtype: class:`ebscopy._Connection`
 
 		"""
 		self.new_user_id					= _use_or_get("user_id", user_id)
@@ -384,7 +384,7 @@ class Session:
 		:param string method: API endpoint
 		:param dict data: Request data to POST
 		:returns: response from API
-		:rtype dict
+		:rtype: dict
 		"""
 		if not self.active:
 			raise SessionError("This session is not active (probably explicitly closed)!")
@@ -400,7 +400,7 @@ class Session:
 		"""
 		Determine object equality based on SessionToken.
 
-		:rtype boolean
+		:rtype: boolean
 		"""
 		if isinstance(other, Session):
 			return self.session_token == other.session_token
@@ -412,7 +412,7 @@ class Session:
 		"""
 		Determine object inequality based on SessionToken.
 
-		:rtype boolean
+		:rtype: boolean
 		"""
 		result = self.__eq__(other)
 		if result is NotImplemented:
@@ -433,7 +433,7 @@ class Session:
 		:param int page: page number to return (1)
 		:param string highlight: wrap search terms in <highlight> tags (y* | n)
 		:returns: Results object
-		:rtype :class:`ebscopy.Results`
+		:rtype: class:`ebscopy.Results`
 
 		"""
 
@@ -476,7 +476,7 @@ class Session:
 
 		:param tuple dbid_an_tup: DbId and An to make 
 		:returns: Record object
-		:rtype :class:`ebscopy.Record` 
+		:rtype: class:`ebscopy.Record` 
 
 		"""
 		retrieve_data						= {
