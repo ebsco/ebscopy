@@ -17,7 +17,7 @@ from pkg_resources import get_distribution
 # TODO: this assumes only one highlight in string; what if more?
 def _parse_highlight(text):
 	"""
-	Parse out the API's ``<highlight>`` tags and return a dictionary including the clean text.
+	Parse out the API's ``<highlight>`` tags and return a dict including the clean text.
 
 	:param string text: unprocessed text that may include ``<highlight>`` and ``</highlight>`` tags
 	:rtype: dict
@@ -56,7 +56,7 @@ def _get_item_data(items, name):
 
 	:param list items: a list of dictionaries, each of which contains ``Name`` and ``Data`` keys
 	:param string name: the ``Name`` to find
-	:rtype: dictionary
+	:rtype: dict
 	"""
 	dictionary								= next((item for item in items if item["Name"] == name), None)
 	if dictionary:
@@ -97,26 +97,44 @@ def _use_or_get(kind, value=""):
 
 ### Classes
 
-# Alex Martelli's Borg; used by ConnectionPool
-# http://www.aleax.it/5ep.html
 class Borg:
+	"""
+	All objects of class share same state.
+
+	Extended by ConnectionPool. Based on Alex Martelli's code:
+	http://www.aleax.it/5ep.html
+	"""
 	_shared_state 							= {}
 	def __init__(self):
 		self.__dict__ 						= self._shared_state
 
 class AuthenticationError(Exception):
+	"""
+	An error authenticating against the API.
+	"""
     pass
 
 class SessionError(Exception):
+	"""
+	An error creating a Session with the API.
+	"""
     pass
 
-# Connection object
-# Don't use manually, created by ConnectionPool
-# Create with credentials and settings, then call connect()
 class _Connection:
+	"""
+	A single connection to the API, shared by 1+ Sessions.
+
+	Created and managed by the ConnectionPool object, POOL.
+	"""
 
 	# ConnectionPool should give us safe values when initializing
 	def __init__(self, user_id, password):
+		"""
+		Initialize the _Connection object with user_id and password.
+
+		:param string user_id: API user ID
+		:param string passowrd: API password
+		"""
 		self.user_id						= user_id
 		self.password						= password
 		self.userpass						= (user_id, password)
@@ -125,6 +143,18 @@ class _Connection:
 
 	# Internal method to generate an HTTP request 
 	def request(self, method, data, session_token=None, attempt=0):
+		"""
+		Make a single HTTP request to the API server.
+
+		If the request fails, try again twice.
+
+		:param string method: valid API endpoint
+		:param dict data: Data to be POSTed as JSON
+		:param string session_token: optional Session Token to include in header
+		:param int attempt: optional counter of request attempts
+		:returns: response from API
+		:rtype dict
+		"""
 		valid_methods						= frozenset(["CreateSession", "Info", "Search", "Retrieve", "EndSession", "UIDAuth", "SearchCriteria"])
 		if method not in valid_methods:
 			raise ValueError("Unknown API method requested!")
@@ -194,8 +224,10 @@ class _Connection:
 		return r.json()
 	# End of [request] function
 
-	# Actually connect to the API by doing an authorization
 	def connect(self):
+		"""
+		Request an AuthToken from the API using the credentials from initilization.
+		"""
 	
 		# I think this is okay. Safe for new connects, and no need for a reconnect wrapper function to do it.
 		self.auth_token					= None
@@ -226,6 +258,15 @@ class _Connection:
 	# Create a Session by hitting the API and returning a session token
 	# The parameters should have been vetted by the Session object that called this
 	def _create_session(self, profile="", org="", guest=""):
+		"""
+		Create a Session by requesting a Session Token from the API, using passed credentials.
+
+		:param string profile: EDS profile to search
+		:param string org: Arbitrary text for reporting 
+		:param string guest: Treat the user as a guest or authenticated (n* | y)
+		:returns: SessionToken
+		:rtype string
+		"""
 		create_data							= {
 												"Profile":	profile,
 												"Guest":	guest,
@@ -240,14 +281,27 @@ class _Connection:
 # End of [_Connection] class
 
 class ConnectionPool(Borg):
+	"""
+	Container for _Connection objects.
+	"""
 	def __init__(self):
+		"""
+		Initialize pool as a Borg.
+		"""
 		Borg.__init__(self)													# Share state with another ConnectionPool
 		self.pool							= []							# The list of Connection objects
 
-
-	# Provide a _Connection:
-	# If one exists with same credentials, give it, otherwise make it and give it
 	def get(self, user_id="", password=""):
+		"""
+		Provide an existing or new connection based on credentials.
+		
+		If the credentials match an existing connection, return it; otherwise, return a new one.
+
+		:param string user_id: API user_id
+		:param string password: API password
+		:returns: _Connection object
+		:rtype :class:`ebscopy._Connection`
+		"""
 		self.new_user_id					= _use_or_get("user_id", user_id)
 		self.new_password					= _use_or_get("password", password)
 		connection							= _Connection(self.new_user_id, self.new_password)	# The Connection object
@@ -267,13 +321,32 @@ class ConnectionPool(Borg):
 	# End of [get] function
 
 	def __len__(self):
+		"""
+		Return number of _Connection objects in the pool.
+		"""
 		return len(self.pool)
 	# End of [len] function
 
 # End of [ConnectionPool] class
 
 class Session:
+	"""
+	A single user's API session object.
+	"""
 	def __init__(self, connection=None, profile="", org="", guest="", user_id="", password=""):
+		"""
+		Initialize Session object.
+
+		Will get a _Connection from the POOL if necessary. Other parameters are taken from EDS_ environment variables as needed.
+
+		:param connection: optional _Connection object to use
+		:type connection: :class:`ebscopy._Connection` instance
+		:param string profile: optional EDS profile to use
+		:param string org: optional Org value for reporting
+		:param string guest: Treat the user as a guest or authenticated (n* | y)
+		:param string user_id: optional EDS user_id to use
+		:param string password: optional EDS password to use
+		"""
 
 		if connection:
 			self.connection					= connection
@@ -302,6 +375,16 @@ class Session:
 	# End of [__init__] function
 
 	def _request(self, method, data):
+		"""
+		Use the _Connection.request function to make an API request.
+
+		Will attempt to heal itself if SessionToken is expired.
+
+		:param string method: API endpoint
+		:param dict data: Request data to POST
+		:returns: response from API
+		:rtype dict
+		"""
 		if not self.active:
 			raise SessionError("This session is not active (probably explicitly closed)!")
 		try:
@@ -313,6 +396,11 @@ class Session:
 	# End of [_request] function
 
 	def __eq__(self, other):
+		"""
+		Determine object equality based on SessionToken.
+
+		:rtype boolean
+		"""
 		if isinstance(other, Session):
 			return self.session_token == other.session_token
 		else:
@@ -320,6 +408,11 @@ class Session:
 	# End of [__eq__] function
 
 	def __ne__(self, other):
+		"""
+		Determine object inequality based on SessionToken.
+
+		:rtype boolean
+		"""
 		result = self.__eq__(other)
 		if result is NotImplemented:
 			return result
@@ -328,6 +421,19 @@ class Session:
 
 	# Do a search
 	def search(self, query, mode="all", sort="relevance", inc_facets="y", view="brief", rpp=20, page=1, highlight="y"):
+		"""
+		Perform a search with the EDS API.
+
+		:param string mode: SearchMode, (all* | any | bool | smart) 
+		:param string sort: sort mode, determined by API configuration
+		:param string inc_facets: IncludeFacets, (y* | n)
+		:param string view: level of record detail (brief* | title | detailed)
+		:param int rpp: results per page (20)
+		:param int page: page number to return (1)
+		:param string highlight: wrap search terms in <highlight> tags (y* | n)
+		:returns: Results object
+		:rtype :class:`ebscopy.Results`
+		"""
 
 		search_data							=	{
 												"SearchCriteria": 		{
@@ -363,6 +469,13 @@ class Session:
 
 	# Retrieve a record
 	def retrieve(self, dbid_an_tup, highlight=None, ebook="ebook-pdf"):
+		"""
+		Retrieve a single record by DbId and An values.
+
+		:param tuple dbid_an_tup: DbId and An to make 
+		:returns: Record object
+		:rtype :class:`ebscopy.Record`
+		"""
 		retrieve_data						= {
 					"DbId": dbid_an_tup[0],
 					"An": dbid_an_tup[1],
@@ -384,6 +497,9 @@ class Session:
 
 	# End the Session
 	def end(self):
+		"""
+		End an active Session.
+		"""
 		end_data							= {
 					"SessionToken": self.session_token
 				  }
