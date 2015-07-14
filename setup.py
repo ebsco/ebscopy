@@ -7,23 +7,20 @@ ld_md								= open('README.md').read()
 
 # If pandoc is installed and working, we can translate README.md directly to reStructuredText and use it for the long description
 try:
-	import pandoc
-	pandoc.core.PANDOC_PATH			= '/usr/bin/pandoc'
+	import pypandoc
+	pypandoc.PANDOC_PATH			= '/usr/bin/pandoc'
 
 	# Pandoc chokes on Unicode characters, which are used in the pronuncation guide
 	ld_md							= re.sub("\(\*.*\*\)", "(*/'ebskOu,pai/*, not */'ebskopi:/*)", ld_md, re.M)
 
-	doc								= pandoc.Document()
-	doc.markdown					= ld_md
-	ld								= doc.rst
 except:
-	ld								= ld_md
+	ld								= pypandoc.convert(ld_md, "rst", format="md")
 # End of pandoc README translation attempt
 
 # Regular setup data
 setup(
 	name							= 'ebscopy',
-	version							= '0.0.8',
+	version							= '0.0.10',
 	author							= 'Jesse Jensen',
 	author_email					= 'jjensen@ebsco.com',
 	url								= 'https://github.com/jessejensen/ebscopy',
