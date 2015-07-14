@@ -3,7 +3,6 @@
 import os
 import logging 
 from ebscopy import *
-#from pkg_resources import get_distribution
 
 log_levels									= {
 												'DEBUG':	logging.DEBUG,
@@ -23,6 +22,5 @@ logging.basicConfig(
 	level=log_level,
 	format='%(asctime)s %(levelname)s %(module)s.%(funcName)s: %(message)s'
 )
-
 
 #EOF
