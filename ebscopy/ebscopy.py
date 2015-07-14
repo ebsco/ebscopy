@@ -14,9 +14,19 @@ from pkg_resources import get_distribution
 
 ### Helper Functions
 
-# Take text with highlight tagging, remove the highlight tags but save the locations
 # TODO: this assumes only one highlight in string; what if more?
 def _parse_highlight(text):
+	"""
+	Parse out the API's ``<highlight>`` tags and return a dictionary including the clean text.
+
+	:param string text: unprocessed text that may include ``<highlight>`` and ``</highlight>`` tags
+	:rtype: dict
+	:key: orig: the original text
+	:key: clean: the stripped text
+	:key: start_pos: integer representing the start of highlighting in ``clean``
+	:key: end_pos: integer representing the end of highlighting in ``clean``
+	
+	"""
 	output["orig"]							= text
 	output["clean"]							= ""
 	output["start_pos"]						= 0
@@ -38,10 +48,16 @@ def _parse_highlight(text):
 	return output
 # End of [_parse_highlight] function
 
-# Get the "Data" component of a named item from an arbitrarily sorted JSON list
 # TODO: Do we need this? 
 # TODO: Use group instead of name?
 def _get_item_data(items, name):
+	"""
+	Return the ``Data`` component of item ``name`` from a list of dictionaries
+
+	:param list items: a list of dictionaries, each of which contains ``Name`` and ``Data`` keys
+	:param string name: the ``Name`` to find
+	:rtype: dictionary
+	"""
 	dictionary								= next((item for item in items if item["Name"] == name), None)
 	if dictionary:
 		return dictionary["Data"]
@@ -50,8 +66,15 @@ def _get_item_data(items, name):
 		return None
 # End of [_get_item_data] function
 
-# Use a credential value or get it from the OS environment
 def _use_or_get(kind, value=""):
+	"""
+	Return the value passed or get it from the appropriate environment variable.
+
+	:param string kind: type of value
+	:param string value: content of value
+	:rtype: string
+	:raises ValueError: when value is empty and environemnt variable is not found
+	"""
 	kind_env_map							= {
 												"user_id":		"EDS_USER",
 												"password":		"EDS_PASS",
@@ -98,7 +121,6 @@ class _Connection:
 		self.password						= password
 		self.userpass						= (user_id, password)
 		self.interface_id					= "ebscopy %s" % (_version)
-		#self.interface_id					= "ebscopy %s" % 0
 	# End of [__init__] function
 
 	# Internal method to generate an HTTP request 
