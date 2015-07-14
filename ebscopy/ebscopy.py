@@ -301,7 +301,6 @@ class ConnectionPool(Borg):
 		:param string password: API password
 		:returns: _Connection object
 		:rtype: class:`ebscopy._Connection`
-
 		"""
 		self.new_user_id					= _use_or_get("user_id", user_id)
 		self.new_password					= _use_or_get("password", password)
