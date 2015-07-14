@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
-from ebscopy import ebscopy
+from ebscopy import *
 
-connection	= ebscopy.Connection()
-connection.connect()
-results = connection.search("blue")
+connection = POOL.get()
+session = Session(connection)
+results = session.search("blue")
 print "---------------"
 print "Search Results"
 print "---------------"
@@ -18,27 +18,27 @@ print results.avail_facets_labels
 print "---------------"
 print 
 
-record = connection.retrieve(results.record[0])
+record = session.retrieve(results.record[0])
 print "---------------"
 print "Simple Call for Record Info"
 print "---------------"
 record.pprint()
 print "---------------"
 
-record = connection.retrieve((results.simple_records[0]['DbId'], results.simple_records[0]['An']), highlight=["blue"])
+record = session.retrieve((results.simple_records[0]['DbId'], results.simple_records[0]['An']), highlight=["blue"])
 print "---------------"
 print "Record Info with Highlight"
 print "---------------"
 record.pprint()
 print "---------------"
 
-record = connection.retrieve((results.simple_records[0]['DbId'], results.simple_records[0]['An']))
+record = session.retrieve((results.simple_records[0]['DbId'], results.simple_records[0]['An']))
 print "---------------"
 print "Record Info without Highlight"
 print "---------------"
 record.pprint()
 print "---------------"
 
-connection.disconnect()
+session.end()
 
 # EOF
