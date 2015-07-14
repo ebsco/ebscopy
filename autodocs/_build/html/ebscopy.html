@@ -1,0 +1,210 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ebscopy package &mdash; ebscopy 0.0.11 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.0.11',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="ebscopy 0.0.11 documentation" href="index.html" />
+    <link rel="next" title="ebscopy.tests package" href="ebscopy.tests.html" />
+    <link rel="prev" title="Welcome to ebscopy’s documentation!" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ebscopy-package">
+<h1>ebscopy package<a class="headerlink" href="#ebscopy-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ebscopy.tests.html">ebscopy.tests package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ebscopy.tests.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ebscopy.tests.html#module-ebscopy.tests.ebscopy_test">ebscopy.tests.ebscopy_test module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ebscopy.tests.html#module-ebscopy.tests">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-ebscopy.ebscopy">
+<span id="ebscopy-ebscopy-module"></span><h2>ebscopy.ebscopy module<a class="headerlink" href="#module-ebscopy.ebscopy" title="Permalink to this headline">¶</a></h2>
+<dl class="exception">
+<dt id="ebscopy.ebscopy.AuthenticationError">
+<em class="property">exception </em><code class="descclassname">ebscopy.ebscopy.</code><code class="descname">AuthenticationError</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#AuthenticationError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.AuthenticationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="ebscopy.ebscopy.Borg">
+<em class="property">class </em><code class="descclassname">ebscopy.ebscopy.</code><code class="descname">Borg</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Borg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Borg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="ebscopy.ebscopy.ConnectionPool">
+<em class="property">class </em><code class="descclassname">ebscopy.ebscopy.</code><code class="descname">ConnectionPool</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#ConnectionPool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.ConnectionPool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ebscopy.ebscopy.Borg" title="ebscopy.ebscopy.Borg"><code class="xref py py-class docutils literal"><span class="pre">ebscopy.ebscopy.Borg</span></code></a></p>
+<dl class="method">
+<dt id="ebscopy.ebscopy.ConnectionPool.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>user_id=''</em>, <em>password=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#ConnectionPool.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.ConnectionPool.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ebscopy.ebscopy.Record">
+<em class="property">class </em><code class="descclassname">ebscopy.ebscopy.</code><code class="descname">Record</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Record"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Record" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="ebscopy.ebscopy.Record.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Record.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Record.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ebscopy.ebscopy.Record.pprint">
+<code class="descname">pprint</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Record.pprint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Record.pprint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ebscopy.ebscopy.Results">
+<em class="property">class </em><code class="descclassname">ebscopy.ebscopy.</code><code class="descname">Results</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Results" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="ebscopy.ebscopy.Results.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Results.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Results.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ebscopy.ebscopy.Results.pprint">
+<code class="descname">pprint</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Results.pprint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Results.pprint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ebscopy.ebscopy.Session">
+<em class="property">class </em><code class="descclassname">ebscopy.ebscopy.</code><code class="descname">Session</code><span class="sig-paren">(</span><em>connection=None</em>, <em>profile=''</em>, <em>org=''</em>, <em>guest=''</em>, <em>user_id=''</em>, <em>password=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Session"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Session" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="ebscopy.ebscopy.Session.end">
+<code class="descname">end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Session.end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Session.end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ebscopy.ebscopy.Session.retrieve">
+<code class="descname">retrieve</code><span class="sig-paren">(</span><em>dbid_an_tup</em>, <em>highlight=None</em>, <em>ebook='ebook-pdf'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Session.retrieve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Session.retrieve" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ebscopy.ebscopy.Session.search">
+<code class="descname">search</code><span class="sig-paren">(</span><em>query</em>, <em>mode='all'</em>, <em>sort='relevance'</em>, <em>inc_facets='y'</em>, <em>view='brief'</em>, <em>rpp=20</em>, <em>page=1</em>, <em>highlight='y'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Session.search"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Session.search" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="ebscopy.ebscopy.SessionError">
+<em class="property">exception </em><code class="descclassname">ebscopy.ebscopy.</code><code class="descname">SessionError</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#SessionError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.SessionError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-ebscopy">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ebscopy" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">ebscopy package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-ebscopy.ebscopy">ebscopy.ebscopy module</a></li>
+<li><a class="reference internal" href="#module-ebscopy">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to ebscopy&#8217;s documentation!</a></li>
+      <li>Next: <a href="ebscopy.tests.html" title="next chapter">ebscopy.tests package</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/ebscopy.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, EBSCO Information Services.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+      |
+      <a href="_sources/ebscopy.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

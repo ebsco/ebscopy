@@ -1,0 +1,252 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ebscopy.tests.ebscopy_test &mdash; ebscopy 0.0.11 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.0.11',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="ebscopy 0.0.11 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for ebscopy.tests.ebscopy_test</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/python</span>
+<span class="c">#</span>
+<span class="c"># Test suite for ebscopy</span>
+<span class="c">#</span>
+<span class="c"># TODO?</span>
+<span class="c"># Create second Session object with specific user/pass and no Connection object</span>
+<span class="c"># Do we need to test that an implicit connection with bad env variables doesn&#39;t work? I don&#39;t think so...</span>
+<span class="c"># </span>
+
+<span class="kn">from</span> <span class="nn">ebscopy</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">unittest</span>
+<span class="kn">from</span> <span class="nn">requests</span> <span class="kn">import</span> <span class="n">HTTPError</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="c"># We need these ENV variables to exist for testing</span>
+<div class="viewcode-block" id="EnvironmentIsGoodTests"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.EnvironmentIsGoodTests">[docs]</a><span class="k">class</span> <span class="nc">EnvironmentIsGoodTests</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="EnvironmentIsGoodTests.test_for_env_variables"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.EnvironmentIsGoodTests.test_for_env_variables">[docs]</a>	<span class="k">def</span> <span class="nf">test_for_env_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;EDS_USER&#39;</span><span class="p">]),</span> <span class="mi">0</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;EDS_PASS&#39;</span><span class="p">]),</span> <span class="mi">0</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;EDS_PROFILE&#39;</span><span class="p">]),</span> <span class="mi">0</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;EDS_ORG&#39;</span><span class="p">]),</span> <span class="mi">0</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;EDS_GUEST&#39;</span><span class="p">]),</span> <span class="mi">0</span><span class="p">)</span>
+<span class="c"># End of [EnvironmentIsGoodTests] class</span>
+
+<span class="c"># The simplest creation method</span>
+<span class="c"># While we&#39;re doing it, might as well get some basic two-session stuff out of the way</span></div></div>
+<div class="viewcode-block" id="CreateSessionsWithENV"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.CreateSessionsWithENV">[docs]</a><span class="k">class</span> <span class="nc">CreateSessionsWithENV</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="CreateSessionsWithENV.test_basic_sessions"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.CreateSessionsWithENV.test_basic_sessions">[docs]</a>	<span class="k">def</span> <span class="nf">test_basic_sessions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">sess_1</span>								<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">sess_1</span><span class="p">,</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">)</span>
+		<span class="n">info_1</span>								<span class="o">=</span> <span class="n">sess_1</span><span class="o">.</span><span class="n">info_data</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">info_1</span><span class="p">)</span>
+		<span class="n">sess_2</span>								<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">sess_1</span><span class="o">.</span><span class="n">connection</span><span class="p">,</span> <span class="n">sess_2</span><span class="o">.</span><span class="n">connection</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span><span class="n">sess_1</span><span class="p">,</span> <span class="n">sess_2</span><span class="p">)</span>
+		<span class="n">res_1_blue</span>							<span class="o">=</span> <span class="n">sess_1</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&quot;blue&quot;</span><span class="p">)</span>
+		<span class="n">res_2_blue</span>							<span class="o">=</span> <span class="n">sess_2</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&quot;blue&quot;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">res_1_blue</span><span class="p">,</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Results</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">res_1_blue</span><span class="p">,</span> <span class="n">res_2_blue</span><span class="p">)</span>
+		<span class="n">res_1_green</span>							<span class="o">=</span> <span class="n">sess_1</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&quot;green&quot;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span><span class="n">res_1_blue</span><span class="p">,</span> <span class="n">res_1_green</span><span class="p">)</span>
+		<span class="n">sess_1</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+		<span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="n">SessionError</span><span class="p">):</span>								<span class="c"># Explicitly ended, so don&#39;t try to recreate</span>
+			<span class="n">res_1_red</span>						<span class="o">=</span> <span class="n">sess_1</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&quot;red&quot;</span><span class="p">)</span>
+		<span class="n">res_2_green</span>							<span class="o">=</span> <span class="n">sess_2</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&quot;green&quot;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">res_1_green</span><span class="p">,</span> <span class="n">res_2_green</span><span class="p">)</span>
+		<span class="n">sess_2</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+	<span class="c"># End of [test_basic_sessions] function</span>
+<span class="c"># End of [CreateSessionsWithENV] class</span>
+</div></div>
+<div class="viewcode-block" id="CreateSessionsWithParameters"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.CreateSessionsWithParameters">[docs]</a><span class="k">class</span> <span class="nc">CreateSessionsWithParameters</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+	<span class="c"># We want to strip out any environment variables so they don&#39;t get used</span>
+<div class="viewcode-block" id="CreateSessionsWithParameters.setUp"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.CreateSessionsWithParameters.setUp">[docs]</a>	<span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">environ</span>						<span class="o">=</span> <span class="p">{}</span>
+		<span class="k">for</span> <span class="n">env</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+			<span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s">&quot;EDS_&quot;</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">env</span><span class="p">]</span>			<span class="o">=</span> <span class="n">value</span>
+				<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">env</span><span class="p">]</span>				<span class="o">=</span> <span class="s">&quot;&quot;</span>
+
+	<span class="c"># Gotta put them back!</span></div>
+<div class="viewcode-block" id="CreateSessionsWithParameters.tearDown"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.CreateSessionsWithParameters.tearDown">[docs]</a>	<span class="k">def</span> <span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">env</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+			<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">env</span><span class="p">]</span>					<span class="o">=</span> <span class="n">value</span>
+</div>
+<div class="viewcode-block" id="CreateSessionsWithParameters.test_good_explicit_connection_works"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.CreateSessionsWithParameters.test_good_explicit_connection_works">[docs]</a>	<span class="k">def</span> <span class="nf">test_good_explicit_connection_works</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">user_id</span>								<span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;EDS_USER&quot;</span><span class="p">)</span>
+		<span class="n">password</span>							<span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;EDS_PASS&quot;</span><span class="p">)</span>
+		<span class="n">profile</span>								<span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;EDS_PROFILE&quot;</span><span class="p">)</span>
+		<span class="n">org</span>									<span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;EDS_ORG&quot;</span><span class="p">)</span>
+		<span class="n">guest</span>								<span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;EDS_GUEST&quot;</span><span class="p">)</span>
+
+		<span class="n">sess_1</span>								<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="n">user_id</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="n">password</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="n">profile</span><span class="p">,</span> <span class="n">org</span><span class="o">=</span><span class="n">org</span><span class="p">,</span> <span class="n">guest</span><span class="o">=</span><span class="n">guest</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">sess_1</span><span class="p">,</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">)</span>
+		<span class="n">info_1</span>								<span class="o">=</span> <span class="n">sess_1</span><span class="o">.</span><span class="n">info_data</span>
+		<span class="n">sess_1</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">info_1</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="CreateSessionsWithParameters.test_bad_explicit_connection_breaks"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.CreateSessionsWithParameters.test_bad_explicit_connection_breaks">[docs]</a>	<span class="k">def</span> <span class="nf">test_bad_explicit_connection_breaks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="n">ebscopy</span><span class="o">.</span><span class="n">AuthenticationError</span><span class="p">):</span>
+			<span class="n">sess_1</span>							<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s">&quot;betternotwork&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s">&quot;betternotwork&quot;</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="s">&quot;betternotwork&quot;</span><span class="p">,</span> <span class="n">org</span><span class="o">=</span><span class="s">&quot;betternotwork&quot;</span><span class="p">,</span> <span class="n">guest</span><span class="o">=</span><span class="s">&quot;n&quot;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="CreateSessionsWithParameters.test_missing_user_explicit_connection_breaks"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.CreateSessionsWithParameters.test_missing_user_explicit_connection_breaks">[docs]</a>	<span class="k">def</span> <span class="nf">test_missing_user_explicit_connection_breaks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+			<span class="n">sess_1</span>							<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">org</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">guest</span><span class="o">=</span><span class="s">&quot;n&quot;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="CreateSessionsWithParameters.test_implict_connection_breaks"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.CreateSessionsWithParameters.test_implict_connection_breaks">[docs]</a>	<span class="k">def</span> <span class="nf">test_implict_connection_breaks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+			<span class="n">sess_1</span>							<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+<span class="c"># End of [CreateSessionsWithParameters] class</span>
+</div></div>
+<div class="viewcode-block" id="CreateConnectionFirst"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.CreateConnectionFirst">[docs]</a><span class="k">class</span> <span class="nc">CreateConnectionFirst</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="CreateConnectionFirst.test_sessions_via_connections"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.CreateConnectionFirst.test_sessions_via_connections">[docs]</a>	<span class="k">def</span> <span class="nf">test_sessions_via_connections</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ebscopy</span><span class="o">.</span><span class="n">POOL</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>								<span class="c"># Pool should start empty</span>
+		<span class="n">conn_a</span>								<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">POOL</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>			<span class="c"># Can I get a new implicit connection from the pool?</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">conn_a</span><span class="p">,</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">_Connection</span><span class="p">)</span>			
+		<span class="n">sess_1</span>								<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">(</span><span class="n">connection</span><span class="o">=</span><span class="n">conn_a</span><span class="p">)</span>	<span class="c"># Can I make a session with the object?</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">sess_1</span><span class="p">,</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">)</span>
+		<span class="n">info_1</span>								<span class="o">=</span> <span class="n">sess_1</span><span class="o">.</span><span class="n">info_data</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">info_1</span><span class="p">)</span>
+		<span class="n">sess_2</span>								<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">(</span><span class="n">connection</span><span class="o">=</span><span class="n">conn_a</span><span class="p">)</span>	<span class="c"># Can I make another session with the same object?</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span><span class="n">sess_1</span><span class="p">,</span> <span class="n">sess_2</span><span class="p">)</span>									<span class="c"># These sessions should be different</span>
+		<span class="n">conn_b</span>								<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">POOL</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">conn_b</span><span class="p">,</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">_Connection</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ebscopy</span><span class="o">.</span><span class="n">POOL</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>								<span class="c"># Pool should only have the one _Connection</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">conn_a</span><span class="p">,</span> <span class="n">conn_b</span><span class="p">)</span>									<span class="c"># ConnectionPool should have given the existing _Connection</span>
+		<span class="n">sess_1</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+		<span class="n">sess_2</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+	<span class="c"># End of [test_sessions_via_connections] function</span>
+<span class="c"># End of [CreateConnectionFirst] class</span>
+</div></div>
+<div class="viewcode-block" id="Search"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.Search">[docs]</a><span class="k">class</span> <span class="nc">Search</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="Search.test_search_results"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.Search.test_search_results">[docs]</a>	<span class="k">def</span> <span class="nf">test_search_results</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">sess</span>								<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+		<span class="n">res</span>									<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&quot;yellow&quot;</span><span class="p">)</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">stat_total_hits</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">stat_total_time</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">avail_facets_labels</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">)</span>
+
+		<span class="n">rec</span>									<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Record</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">dbid</span><span class="p">,</span> <span class="p">(</span><span class="nb">unicode</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">an</span><span class="p">,</span> <span class="p">(</span><span class="nb">unicode</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">plink</span><span class="p">,</span> <span class="p">(</span><span class="nb">unicode</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertRegexpMatches</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">plink</span><span class="p">,</span> <span class="s">&quot;^http://&quot;</span><span class="p">)</span>
+		
+		<span class="n">sess</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+<span class="c"># End of [SearchTests] class</span>
+</div></div>
+<div class="viewcode-block" id="RecordTests"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.RecordTests">[docs]</a><span class="k">class</span> <span class="nc">RecordTests</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="RecordTests.test_record_equality"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.RecordTests.test_record_equality">[docs]</a>	<span class="k">def</span> <span class="nf">test_record_equality</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">sess</span>								<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+		<span class="n">res</span>									<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&quot;orange&quot;</span><span class="p">)</span>
+
+		<span class="n">rec_0</span>								<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+		<span class="n">rec_1_a</span>								<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+		<span class="n">rec_1_b</span>								<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+		<span class="n">rec_2</span>								<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">rec_0</span><span class="p">,</span> <span class="n">rec_0</span><span class="p">)</span>									<span class="c"># Test identity</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">rec_1_a</span><span class="p">,</span> <span class="n">rec_1_b</span><span class="p">)</span>								<span class="c"># Test two equal objects</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span><span class="n">rec_0</span><span class="p">,</span> <span class="n">rec_2</span><span class="p">)</span>								<span class="c"># Test two different objects</span>
+
+		<span class="n">sess</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+<span class="c"># End of [RecordTests] class</span>
+</div></div>
+<div class="viewcode-block" id="TimeoutTests"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.TimeoutTests">[docs]</a><span class="k">class</span> <span class="nc">TimeoutTests</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="TimeoutTests.test_auth_timeout"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.TimeoutTests.test_auth_timeout">[docs]</a>	<span class="k">def</span> <span class="nf">test_auth_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">conn</span>							<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">POOL</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+		<span class="n">sess</span>							<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">(</span><span class="n">connection</span><span class="o">=</span><span class="n">conn</span><span class="p">)</span>
+		<span class="n">res_purple</span>						<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&quot;purple&quot;</span><span class="p">)</span>
+
+		<span class="n">timeout_time</span>					<span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">auth_timeout_time</span>
+		<span class="n">sleeptime</span>						<span class="o">=</span> <span class="n">timeout_time</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+
+		<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">sleeptime</span><span class="o">.</span><span class="n">seconds</span><span class="p">)</span>
+		<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span>
+
+		<span class="n">res_violet</span>						<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&quot;violet&quot;</span><span class="p">)</span>
+		
+<span class="c"># EOF</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, EBSCO Information Services.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

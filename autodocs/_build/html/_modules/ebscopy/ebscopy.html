@@ -1,0 +1,614 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ebscopy.ebscopy &mdash; ebscopy 0.0.11 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.11',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="ebscopy 0.0.11 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for ebscopy.ebscopy</h1><div class="highlight"><pre>
+<span class="c"># ebscopy.py</span>
+
+<span class="c"># TODO:</span>
+<span class="c">#	be able to use IP</span>
+<span class="c">#	close on destroy</span>
+
+<span class="kn">import</span> <span class="nn">json</span>																	<span class="c"># Manage data</span>
+<span class="kn">import</span> <span class="nn">os</span>																	<span class="c"># Get ENV variables with auth info</span>
+<span class="kn">from</span> <span class="nn">requests</span> <span class="kn">import</span> <span class="n">HTTPError</span><span class="p">,</span> <span class="n">post</span>										<span class="c"># Does the heavy HTTP lifting</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>									<span class="c"># Monitor authentication timeout</span>
+<span class="kn">import</span> <span class="nn">logging</span>																<span class="c"># Smart logging</span>
+<span class="kn">import</span> <span class="nn">re</span>																	<span class="c"># Strip highlighting</span>
+<span class="kn">from</span> <span class="nn">pkg_resources</span> <span class="kn">import</span> <span class="n">get_distribution</span>
+
+<span class="c">### Helper Functions</span>
+
+<span class="c"># TODO: this assumes only one highlight in string; what if more?</span>
+<span class="k">def</span> <span class="nf">_parse_highlight</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Parse out the API&#39;s ``&lt;highlight&gt;`` tags and return a dictionary including the clean text.</span>
+
+<span class="sd">	:param string text: unprocessed text that may include ``&lt;highlight&gt;`` and ``&lt;/highlight&gt;`` tags</span>
+<span class="sd">	:rtype: dict</span>
+<span class="sd">	:key: orig: the original text</span>
+<span class="sd">	:key: clean: the stripped text</span>
+<span class="sd">	:key: start_pos: integer representing the start of highlighting in ``clean``</span>
+<span class="sd">	:key: end_pos: integer representing the end of highlighting in ``clean``</span>
+<span class="sd">	</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">output</span><span class="p">[</span><span class="s">&quot;orig&quot;</span><span class="p">]</span>							<span class="o">=</span> <span class="n">text</span>
+	<span class="n">output</span><span class="p">[</span><span class="s">&quot;clean&quot;</span><span class="p">]</span>							<span class="o">=</span> <span class="s">&quot;&quot;</span>
+	<span class="n">output</span><span class="p">[</span><span class="s">&quot;start_pos&quot;</span><span class="p">]</span>						<span class="o">=</span> <span class="mi">0</span>
+	<span class="n">output</span><span class="p">[</span><span class="s">&quot;end_pos&quot;</span><span class="p">]</span>						<span class="o">=</span> <span class="mi">0</span>
+
+	<span class="n">start_tag</span>								<span class="o">=</span> <span class="s">&quot;&amp;lt;highlight&amp;gt;&quot;</span>
+	<span class="n">end_tag</span>									<span class="o">=</span> <span class="s">&quot;&amp;lt;\/highlight&amp;gt;&quot;</span>
+
+	<span class="n">start_match</span>								<span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">start_tag</span><span class="p">,</span> <span class="n">output</span><span class="p">[</span><span class="s">&quot;orig&quot;</span><span class="p">])</span>
+	<span class="k">if</span> <span class="n">start_match</span><span class="p">:</span>
+		<span class="n">output</span><span class="p">[</span><span class="s">&quot;start_pos&quot;</span><span class="p">]</span>					<span class="o">=</span> <span class="n">start_match</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+		<span class="n">output</span><span class="p">[</span><span class="s">&quot;clean&quot;</span><span class="p">]</span>						<span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="s">&quot;orig&quot;</span><span class="p">][:</span><span class="n">start_match</span><span class="o">.</span><span class="n">start</span><span class="p">()]</span> <span class="o">+</span> <span class="n">output</span><span class="p">[</span><span class="s">&quot;orig&quot;</span><span class="p">][</span><span class="n">start_match</span><span class="o">.</span><span class="n">end</span><span class="p">():]</span>
+
+	<span class="n">end_match</span>								<span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">end_tag</span><span class="p">,</span> <span class="n">output</span><span class="p">[</span><span class="s">&quot;clean&quot;</span><span class="p">])</span>
+	<span class="k">if</span> <span class="n">end_match</span><span class="p">:</span>
+		<span class="n">output</span><span class="p">[</span><span class="s">&quot;end_pos&quot;</span><span class="p">]</span>					<span class="o">=</span> <span class="n">end_match</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+		<span class="n">output</span><span class="p">[</span><span class="s">&quot;clean&quot;</span><span class="p">]</span>						<span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="s">&quot;clean&quot;</span><span class="p">][:</span><span class="n">end_match</span><span class="o">.</span><span class="n">start</span><span class="p">()]</span> <span class="o">+</span> <span class="n">output</span><span class="p">[</span><span class="s">&quot;clean&quot;</span><span class="p">][</span><span class="n">end_match</span><span class="o">.</span><span class="n">end</span><span class="p">():]</span>
+
+	<span class="k">return</span> <span class="n">output</span>
+<span class="c"># End of [_parse_highlight] function</span>
+
+<span class="c"># TODO: Do we need this? </span>
+<span class="c"># TODO: Use group instead of name?</span>
+<span class="k">def</span> <span class="nf">_get_item_data</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Return the ``Data`` component of item ``name`` from a list of dictionaries</span>
+
+<span class="sd">	:param list items: a list of dictionaries, each of which contains ``Name`` and ``Data`` keys</span>
+<span class="sd">	:param string name: the ``Name`` to find</span>
+<span class="sd">	:rtype: dictionary</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">dictionary</span>								<span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s">&quot;Name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">name</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+	<span class="k">if</span> <span class="n">dictionary</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">dictionary</span><span class="p">[</span><span class="s">&quot;Data&quot;</span><span class="p">]</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">logging</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;_get_item_data: No match for </span><span class="si">%s</span><span class="s"> in items!&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+		<span class="k">return</span> <span class="bp">None</span>
+<span class="c"># End of [_get_item_data] function</span>
+
+<span class="k">def</span> <span class="nf">_use_or_get</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Return the value passed or get it from the appropriate environment variable.</span>
+
+<span class="sd">	:param string kind: type of value</span>
+<span class="sd">	:param string value: content of value</span>
+<span class="sd">	:rtype: string</span>
+<span class="sd">	:raises ValueError: when value is empty and environemnt variable is not found</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">kind_env_map</span>							<span class="o">=</span> <span class="p">{</span>
+												<span class="s">&quot;user_id&quot;</span><span class="p">:</span>		<span class="s">&quot;EDS_USER&quot;</span><span class="p">,</span>
+												<span class="s">&quot;password&quot;</span><span class="p">:</span>		<span class="s">&quot;EDS_PASS&quot;</span><span class="p">,</span>
+												<span class="s">&quot;profile&quot;</span><span class="p">:</span>		<span class="s">&quot;EDS_PROFILE&quot;</span><span class="p">,</span>
+												<span class="s">&quot;org&quot;</span><span class="p">:</span>			<span class="s">&quot;EDS_ORG&quot;</span><span class="p">,</span>
+												<span class="s">&quot;guest&quot;</span><span class="p">:</span>		<span class="s">&quot;EDS_GUEST&quot;</span><span class="p">,</span>
+											<span class="p">}</span>
+	<span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+		<span class="n">env</span>									<span class="o">=</span> <span class="n">kind_env_map</span><span class="p">[</span><span class="n">kind</span><span class="p">]</span>
+		<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">):</span>
+			<span class="n">value</span>							<span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">env</span><span class="p">]</span>
+		<span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s">&quot;guest&quot;</span><span class="p">:</span>
+			<span class="n">value</span>							<span class="o">=</span> <span class="s">&quot;n&quot;</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Could not find value for </span><span class="si">%s</span><span class="s"> in passed parameters or OS environment (</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">env</span><span class="p">))</span>
+
+	<span class="k">return</span> <span class="n">value</span>
+<span class="c"># End of [_use_or_get] function</span>
+
+
+<span class="c">### Classes</span>
+
+<span class="c"># Alex Martelli&#39;s Borg; used by ConnectionPool</span>
+<span class="c"># http://www.aleax.it/5ep.html</span>
+<div class="viewcode-block" id="Borg"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Borg">[docs]</a><span class="k">class</span> <span class="nc">Borg</span><span class="p">:</span>
+	<span class="n">_shared_state</span> 							<span class="o">=</span> <span class="p">{}</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span> 						<span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shared_state</span>
+</div>
+<div class="viewcode-block" id="AuthenticationError"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.AuthenticationError">[docs]</a><span class="k">class</span> <span class="nc">AuthenticationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="SessionError"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.SessionError">[docs]</a><span class="k">class</span> <span class="nc">SessionError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+<span class="c"># Connection object</span>
+<span class="c"># Don&#39;t use manually, created by ConnectionPool</span>
+<span class="c"># Create with credentials and settings, then call connect()</span></div>
+<span class="k">class</span> <span class="nc">_Connection</span><span class="p">:</span>
+
+	<span class="c"># ConnectionPool should give us safe values when initializing</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">user_id</span>						<span class="o">=</span> <span class="n">user_id</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">password</span>						<span class="o">=</span> <span class="n">password</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">userpass</span>						<span class="o">=</span> <span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">interface_id</span>					<span class="o">=</span> <span class="s">&quot;ebscopy </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">_version</span><span class="p">)</span>
+	<span class="c"># End of [__init__] function</span>
+
+	<span class="c"># Internal method to generate an HTTP request </span>
+	<span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">session_token</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">attempt</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+		<span class="n">valid_methods</span>						<span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s">&quot;CreateSession&quot;</span><span class="p">,</span> <span class="s">&quot;Info&quot;</span><span class="p">,</span> <span class="s">&quot;Search&quot;</span><span class="p">,</span> <span class="s">&quot;Retrieve&quot;</span><span class="p">,</span> <span class="s">&quot;EndSession&quot;</span><span class="p">,</span> <span class="s">&quot;UIDAuth&quot;</span><span class="p">,</span> <span class="s">&quot;SearchCriteria&quot;</span><span class="p">])</span>
+		<span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_methods</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Unknown API method requested!&quot;</span><span class="p">)</span>
+
+		<span class="n">data_json</span>							<span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+		<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;_Connection.request: JSON data being sent: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">data_json</span><span class="p">)</span>
+		<span class="n">base_host</span>							<span class="o">=</span> <span class="s">&quot;https://eds-api.ebscohost.com&quot;</span>
+		<span class="n">base_path</span>							<span class="o">=</span> <span class="s">&quot;&quot;</span>
+		<span class="n">base_url</span>							<span class="o">=</span> <span class="s">&quot;&quot;</span>
+		<span class="n">full_url</span>							<span class="o">=</span> <span class="s">&quot;&quot;</span>
+
+		<span class="n">attempt</span>								<span class="o">+=</span> <span class="mi">1</span>
+		<span class="k">if</span> <span class="n">attempt</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="n">HTTPError</span><span class="p">(</span><span class="s">&quot;Unable to acquire target lock!&quot;</span><span class="p">)</span>
+
+		<span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&quot;UIDAuth&quot;</span><span class="p">:</span>
+			<span class="n">base_path</span>						<span class="o">=</span> <span class="s">&quot;/authservice/rest/&quot;</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">base_path</span>						<span class="o">=</span> <span class="s">&quot;/edsapi/rest/&quot;</span>
+
+		<span class="n">full_url</span>							<span class="o">=</span> <span class="n">base_host</span> <span class="o">+</span> <span class="n">base_path</span> <span class="o">+</span> <span class="n">method</span>
+		<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;_Connection.request: Full URL: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">full_url</span><span class="p">)</span>
+
+		<span class="n">headers</span>								<span class="o">=</span> <span class="p">{</span><span class="s">&#39;Content-Type&#39;</span><span class="p">:</span> <span class="s">&#39;application/json&#39;</span><span class="p">,</span> <span class="s">&#39;Accept&#39;</span><span class="p">:</span> <span class="s">&#39;application/json&#39;</span><span class="p">}</span>
+
+		<span class="k">try</span><span class="p">:</span>
+			<span class="n">headers</span><span class="p">[</span><span class="s">&#39;x-authenticationToken&#39;</span><span class="p">]</span>	<span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span>
+		<span class="k">except</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="ow">not</span> <span class="s">&quot;UIDAuth&quot;</span><span class="p">:</span>
+				<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Missing Authentication Token!&quot;</span><span class="p">)</span>
+
+		<span class="k">try</span><span class="p">:</span>
+			<span class="n">headers</span><span class="p">[</span><span class="s">&#39;x-sessionToken&#39;</span><span class="p">]</span>		<span class="o">=</span> <span class="n">session_token</span>
+		<span class="k">except</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&quot;UIDAuth&quot;</span><span class="p">,</span> <span class="s">&quot;CreateSession&quot;</span><span class="p">):</span>
+				<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Missing Session Token!&quot;</span><span class="p">)</span>
+
+		<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;_Connection.request: Request headers: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">headers</span><span class="p">)</span>
+
+		<span class="n">r</span>									<span class="o">=</span> <span class="n">post</span><span class="p">(</span><span class="n">full_url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data_json</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+
+		<span class="k">try</span><span class="p">:</span>
+			<span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+		<span class="k">except</span><span class="p">:</span>
+			<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;_Connection.request: Request attempt: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">attempt</span><span class="p">)</span>
+			<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;_Connection.request: Method: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+			<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;_Connection.request: Code: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span>
+			<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;_Connection.request: Request response object: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+			<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;_Connection.request: Error text: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+			<span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;ErrorNumber&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&quot;104&quot;</span><span class="p">,</span> <span class="s">&quot;107&quot;</span><span class="p">):</span>							<span class="c"># Authentication Token Invalid or Missing</span>
+				<span class="n">logging</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;_Connection.request: Bad AuthToken, trying to get another.&quot;</span><span class="p">)</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+				<span class="n">logging</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;_Connection.request: Rerunning original request.&quot;</span><span class="p">)</span>
+				<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">session_token</span><span class="p">,</span> <span class="n">attempt</span><span class="p">)</span>
+			<span class="k">elif</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;ErrorNumber&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&quot;108&quot;</span><span class="p">,</span> <span class="s">&quot;109&quot;</span><span class="p">):</span>							<span class="c"># Session Token Missing or Invalid</span>
+				<span class="n">logging</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;_Connection.request: Bad Session, raising SessionError.&quot;</span><span class="p">)</span>
+				<span class="k">raise</span> <span class="n">SessionError</span>
+			<span class="k">elif</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;ErrorCode&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1102</span><span class="p">:</span>										<span class="c"># ErrorCode is an integer, not a string</span>
+				<span class="k">raise</span> <span class="n">AuthenticationError</span><span class="p">(</span><span class="s">&quot;Invalid credentials!&quot;</span><span class="p">)</span>
+			<span class="k">elif</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;ErrorCode&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1103</span><span class="p">:</span>										<span class="c"># ErrorCode is an integer, not a string</span>
+				<span class="k">raise</span> <span class="n">AuthenticationError</span><span class="p">(</span><span class="s">&quot;No valid profiles found for customer/group combination.&quot;</span><span class="p">)</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="k">raise</span> <span class="n">HTTPError</span><span class="p">(</span><span class="s">&quot;Unexpected error from server!&quot;</span><span class="p">)</span>
+	
+	
+		<span class="k">return</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+	<span class="c"># End of [request] function</span>
+
+	<span class="c"># Actually connect to the API by doing an authorization</span>
+	<span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+	
+		<span class="c"># I think this is okay. Safe for new connects, and no need for a reconnect wrapper function to do it.</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span>					<span class="o">=</span> <span class="bp">None</span>
+
+		<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;_Connection.connect: UserID: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
+		<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;_Connection.connect: Password: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">)</span>
+		<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;_Connection.connect: InterfaceId: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface_id</span><span class="p">)</span>
+
+		<span class="c"># Do UIDAuth</span>
+		<span class="n">auth_data</span>							<span class="o">=</span> <span class="p">{</span>
+					<span class="s">&quot;UserId&quot;</span><span class="p">:</span>	<span class="bp">self</span><span class="o">.</span><span class="n">user_id</span><span class="p">,</span>
+					<span class="s">&quot;Password&quot;</span><span class="p">:</span>	<span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">,</span>
+					<span class="s">&quot;InterfaceId&quot;</span><span class="p">:</span>	<span class="bp">self</span><span class="o">.</span><span class="n">interface_id</span>
+			  	<span class="p">}</span>
+		<span class="n">auth_response</span>						<span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&quot;UIDAuth&quot;</span><span class="p">,</span> <span class="n">auth_data</span><span class="p">)</span>
+		<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;_Connection.connect: UIDAuth response: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">auth_response</span><span class="p">)</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span>						<span class="o">=</span> <span class="n">auth_response</span><span class="p">[</span><span class="s">&quot;AuthToken&quot;</span><span class="p">]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">auth_timeout</span>					<span class="o">=</span> <span class="n">auth_response</span><span class="p">[</span><span class="s">&quot;AuthTimeout&quot;</span><span class="p">]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">auth_timeout_time</span>				<span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">auth_timeout</span><span class="p">))</span>
+
+		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="n">AuthenticationError</span><span class="p">(</span><span class="s">&quot;Didn&#39;t get AuthToken from API?!&quot;</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="c"># End of [connect] function</span>
+
+	<span class="c"># Create a Session by hitting the API and returning a session token</span>
+	<span class="c"># The parameters should have been vetted by the Session object that called this</span>
+	<span class="k">def</span> <span class="nf">_create_session</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">org</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">guest</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">):</span>
+		<span class="n">create_data</span>							<span class="o">=</span> <span class="p">{</span>
+												<span class="s">&quot;Profile&quot;</span><span class="p">:</span>	<span class="n">profile</span><span class="p">,</span>
+												<span class="s">&quot;Guest&quot;</span><span class="p">:</span>	<span class="n">guest</span><span class="p">,</span>
+												<span class="s">&quot;Org&quot;</span><span class="p">:</span>		<span class="n">org</span>
+											<span class="p">}</span>
+
+		<span class="n">create_response</span>						<span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s">&quot;CreateSession&quot;</span><span class="p">,</span> <span class="n">create_data</span><span class="p">)</span>
+		<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;_Connection._create_session: Response: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">create_response</span><span class="p">)</span>
+
+		<span class="k">return</span> <span class="n">create_response</span><span class="p">[</span><span class="s">&quot;SessionToken&quot;</span><span class="p">]</span>
+	<span class="c"># End of [_create_session] function</span>
+<span class="c"># End of [_Connection] class</span>
+
+<div class="viewcode-block" id="ConnectionPool"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.ConnectionPool">[docs]</a><span class="k">class</span> <span class="nc">ConnectionPool</span><span class="p">(</span><span class="n">Borg</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">Borg</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>													<span class="c"># Share state with another ConnectionPool</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">pool</span>							<span class="o">=</span> <span class="p">[]</span>							<span class="c"># The list of Connection objects</span>
+
+
+	<span class="c"># Provide a _Connection:</span>
+	<span class="c"># If one exists with same credentials, give it, otherwise make it and give it</span>
+<div class="viewcode-block" id="ConnectionPool.get"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.ConnectionPool.get">[docs]</a>	<span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">new_user_id</span>					<span class="o">=</span> <span class="n">_use_or_get</span><span class="p">(</span><span class="s">&quot;user_id&quot;</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">new_password</span>					<span class="o">=</span> <span class="n">_use_or_get</span><span class="p">(</span><span class="s">&quot;password&quot;</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+		<span class="n">connection</span>							<span class="o">=</span> <span class="n">_Connection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_user_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_password</span><span class="p">)</span>	<span class="c"># The Connection object</span>
+
+		<span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="p">:</span>
+			<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;ConnectionPool.get: Item: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+			<span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">userpass</span> <span class="o">==</span> <span class="n">connection</span><span class="o">.</span><span class="n">userpass</span><span class="p">:</span>
+				<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;ConnectionPool.get: Item Matched: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+				<span class="n">connection</span>					<span class="o">=</span> <span class="n">item</span>
+				<span class="k">break</span>
+		<span class="k">else</span><span class="p">:</span> <span class="c"># no break</span>
+			<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;ConnectionPool.get: No Items Matched!&quot;</span><span class="p">)</span>
+			<span class="n">connection</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+
+		<span class="k">return</span> <span class="n">connection</span>
+	<span class="c"># End of [get] function</span>
+</div>
+	<span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="p">)</span>
+	<span class="c"># End of [len] function</span>
+
+<span class="c"># End of [ConnectionPool] class</span>
+</div>
+<div class="viewcode-block" id="Session"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Session">[docs]</a><span class="k">class</span> <span class="nc">Session</span><span class="p">:</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">org</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">guest</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">user_id</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">):</span>
+
+		<span class="k">if</span> <span class="n">connection</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">connection</span>					<span class="o">=</span> <span class="n">connection</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">connection</span>					<span class="o">=</span> <span class="n">POOL</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+
+		<span class="c"># Required for Session</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">profile</span>						<span class="o">=</span> <span class="n">_use_or_get</span><span class="p">(</span><span class="s">&quot;profile&quot;</span><span class="p">,</span> <span class="n">profile</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">org</span>							<span class="o">=</span> <span class="n">_use_or_get</span><span class="p">(</span><span class="s">&quot;org&quot;</span><span class="p">,</span> <span class="n">org</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">guest</span>							<span class="o">=</span> <span class="n">_use_or_get</span><span class="p">(</span><span class="s">&quot;guest&quot;</span><span class="p">,</span> <span class="n">guest</span><span class="p">)</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">session_token</span>					<span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">_create_session</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">org</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">guest</span><span class="p">)</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_token</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">active</span>							<span class="o">=</span> <span class="bp">True</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">active</span>							<span class="o">=</span> <span class="bp">False</span>
+			<span class="k">raise</span> <span class="n">SessionError</span><span class="p">(</span><span class="s">&quot;No Session Token received from API!&quot;</span><span class="p">)</span>
+
+
+		<span class="c"># Get Info from API; used by tests</span>
+		<span class="c"># TODO: parse some of this out</span>
+		<span class="c"># TODO: catch SessionTimeout here?</span>
+		<span class="c">#	 &quot;ApplicationSettings&quot;:{ &quot;SessionTimeout&quot;:&quot;480&quot;</span>
+		<span class="n">info_response</span>						<span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="s">&quot;Info&quot;</span><span class="p">,</span> <span class="p">{})</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">info_data</span>						<span class="o">=</span> <span class="n">info_response</span>
+	<span class="c"># End of [__init__] function</span>
+
+	<span class="k">def</span> <span class="nf">_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="n">SessionError</span><span class="p">(</span><span class="s">&quot;This session is not active (probably explicitly closed)!&quot;</span><span class="p">)</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_token</span><span class="p">)</span>
+		<span class="k">except</span> <span class="n">SessionError</span><span class="p">:</span>
+			<span class="n">logging</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;Session._request: Problem with Session, trying to start another!&quot;</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">session_token</span>				<span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">_create_session</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">org</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">guest</span><span class="p">)</span>
+			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_token</span><span class="p">)</span>
+	<span class="c"># End of [_request] function</span>
+
+	<span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+		<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Session</span><span class="p">):</span>
+			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_token</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">session_token</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">return</span> <span class="bp">NotImplemented</span>
+	<span class="c"># End of [__eq__] function</span>
+
+	<span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+		<span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">NotImplemented</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">result</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">return</span> <span class="ow">not</span> <span class="n">result</span>
+
+	<span class="c"># Do a search</span>
+<div class="viewcode-block" id="Session.search"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Session.search">[docs]</a>	<span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&quot;all&quot;</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="s">&quot;relevance&quot;</span><span class="p">,</span> <span class="n">inc_facets</span><span class="o">=</span><span class="s">&quot;y&quot;</span><span class="p">,</span> <span class="n">view</span><span class="o">=</span><span class="s">&quot;brief&quot;</span><span class="p">,</span> <span class="n">rpp</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">page</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">highlight</span><span class="o">=</span><span class="s">&quot;y&quot;</span><span class="p">):</span>
+
+		<span class="n">search_data</span>							<span class="o">=</span>	<span class="p">{</span>
+												<span class="s">&quot;SearchCriteria&quot;</span><span class="p">:</span> 		<span class="p">{</span>
+													<span class="s">&quot;Queries&quot;</span><span class="p">:</span>		 		<span class="p">[</span>
+																				<span class="p">{</span>
+																					<span class="s">&quot;Term&quot;</span><span class="p">:</span> <span class="n">query</span>
+																				<span class="p">}</span>
+																			<span class="p">],</span>
+													<span class="s">&quot;SearchMode&quot;</span><span class="p">:</span>			<span class="n">mode</span><span class="p">,</span>
+													<span class="s">&quot;IncludeFacets&quot;</span><span class="p">:</span>		<span class="n">inc_facets</span><span class="p">,</span>
+													<span class="s">&quot;Sort&quot;</span><span class="p">:</span> 				<span class="n">sort</span>
+																		<span class="p">},</span>
+												<span class="s">&quot;RetrievalCriteria&quot;</span><span class="p">:</span>	<span class="p">{</span>
+													<span class="s">&quot;View&quot;</span><span class="p">:</span>					<span class="n">view</span><span class="p">,</span>
+													<span class="s">&quot;ResultsPerPage&quot;</span><span class="p">:</span>		<span class="n">rpp</span><span class="p">,</span>
+													<span class="s">&quot;PageNumber&quot;</span><span class="p">:</span>			<span class="n">page</span><span class="p">,</span>
+													<span class="s">&quot;Highlight&quot;</span><span class="p">:</span>			<span class="n">highlight</span>
+																		<span class="p">},</span>
+												<span class="s">&quot;Actions&quot;</span><span class="p">:</span>				<span class="bp">None</span>
+												<span class="p">}</span>
+
+		<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Session.search: Request data: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">search_data</span><span class="p">)</span>
+
+		<span class="n">search_response</span>						<span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="s">&quot;Search&quot;</span><span class="p">,</span> <span class="n">search_data</span><span class="p">)</span>
+
+		<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Session.search: Response: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">search_response</span><span class="p">)</span>
+
+		<span class="n">results</span>								<span class="o">=</span> <span class="n">Results</span><span class="p">()</span>
+		<span class="n">results</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">search_response</span><span class="p">)</span>
+
+		<span class="k">return</span> <span class="n">results</span>
+	<span class="c"># End of [search] function</span>
+
+	<span class="c"># Retrieve a record</span></div>
+<div class="viewcode-block" id="Session.retrieve"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Session.retrieve">[docs]</a>	<span class="k">def</span> <span class="nf">retrieve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dbid_an_tup</span><span class="p">,</span> <span class="n">highlight</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ebook</span><span class="o">=</span><span class="s">&quot;ebook-pdf&quot;</span><span class="p">):</span>
+		<span class="n">retrieve_data</span>						<span class="o">=</span> <span class="p">{</span>
+					<span class="s">&quot;DbId&quot;</span><span class="p">:</span> <span class="n">dbid_an_tup</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+					<span class="s">&quot;An&quot;</span><span class="p">:</span> <span class="n">dbid_an_tup</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+					<span class="s">&quot;HighlightTerms&quot;</span><span class="p">:</span> <span class="n">highlight</span><span class="p">,</span>
+					<span class="s">&quot;EbookPreferredFormat&quot;</span><span class="p">:</span> <span class="n">ebook</span>
+				<span class="p">}</span>
+
+		<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Session.retrieve: Request data: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">retrieve_data</span><span class="p">)</span>
+
+		<span class="n">retrieve_response</span>					<span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="s">&quot;Retrieve&quot;</span><span class="p">,</span> <span class="n">retrieve_data</span><span class="p">)</span>
+
+		<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Session.retrieve: Response: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">retrieve_response</span><span class="p">)</span>
+
+		<span class="n">record</span>								<span class="o">=</span> <span class="n">Record</span><span class="p">()</span>
+		<span class="n">record</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">retrieve_response</span><span class="p">)</span>
+
+		<span class="k">return</span> <span class="n">record</span>
+	<span class="c"># End of [retrieve] function</span>
+
+	<span class="c"># End the Session</span></div>
+<div class="viewcode-block" id="Session.end"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Session.end">[docs]</a>	<span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">end_data</span>							<span class="o">=</span> <span class="p">{</span>
+					<span class="s">&quot;SessionToken&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_token</span>
+				  <span class="p">}</span>
+		<span class="n">end_response</span>						<span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="s">&quot;EndSession&quot;</span><span class="p">,</span> <span class="n">end_data</span><span class="p">)</span>
+
+		<span class="k">if</span> <span class="n">end_response</span><span class="p">[</span><span class="s">&quot;IsSuccessful&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;y&quot;</span><span class="p">:</span> 
+			<span class="bp">self</span><span class="o">.</span><span class="n">active</span>							<span class="o">=</span> <span class="bp">False</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">logging</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;Session.end: Unsuccessful! Response: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">end_response</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="c"># End of [end] function</span>
+<span class="c"># End of [Session] class</span>
+
+
+<span class="c"># Results object returned by Search request</span></div></div>
+<div class="viewcode-block" id="Results"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Results">[docs]</a><span class="k">class</span> <span class="nc">Results</span><span class="p">:</span>
+
+	<span class="c"># Initialize </span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">stat_total_hits</span>				<span class="o">=</span> <span class="mi">0</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">stat_total_time</span>				<span class="o">=</span> <span class="mi">0</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">stat_databases_raw</span>				<span class="o">=</span> <span class="p">[]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">avail_facets_raw</span>				<span class="o">=</span> <span class="p">[]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">avail_facets_labels</span>			<span class="o">=</span> <span class="p">[]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">avail_facets_ids</span>				<span class="o">=</span> <span class="p">[]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">simple_records</span>					<span class="o">=</span> <span class="p">[]</span>							<span class="c"># List of dicts w/ keys: PLink, DbID, An, Title, Author?</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">rec_format</span>						<span class="o">=</span> <span class="s">&quot;&quot;</span>							<span class="c"># String straight from JSON</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">records_raw</span>					<span class="o">=</span> <span class="p">[]</span>							<span class="c"># List of raw Records straight from JSON</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">record</span>							<span class="o">=</span> <span class="p">[]</span>							<span class="c"># List of DbId/An tuples</span>
+
+	<span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+		<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Results</span><span class="p">):</span>
+			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_criteria</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">search_criteria</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">stat_total_hits</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">stat_total_hits</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">return</span> <span class="bp">NotImplemented</span>
+	<span class="c"># End of [__eq__] function</span>
+
+	<span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+		<span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">NotImplemented</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">result</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">return</span> <span class="ow">not</span> <span class="n">result</span>
+
+	<span class="c"># Load with dict</span>
+<div class="viewcode-block" id="Results.load"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Results.load">[docs]</a>	<span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">stat_total_hits</span>				<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;SearchResult&quot;</span><span class="p">][</span><span class="s">&quot;Statistics&quot;</span><span class="p">][</span><span class="s">&quot;TotalHits&quot;</span><span class="p">]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">stat_total_time</span>				<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;SearchResult&quot;</span><span class="p">][</span><span class="s">&quot;Statistics&quot;</span><span class="p">][</span><span class="s">&quot;TotalSearchTime&quot;</span><span class="p">]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">stat_databases_raw</span>				<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;SearchResult&quot;</span><span class="p">][</span><span class="s">&quot;Statistics&quot;</span><span class="p">][</span><span class="s">&quot;Databases&quot;</span><span class="p">]</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">search_criteria</span>				<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;SearchRequest&quot;</span><span class="p">][</span><span class="s">&quot;SearchCriteria&quot;</span><span class="p">]</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">avail_facets_raw</span>				<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;SearchResult&quot;</span><span class="p">][</span><span class="s">&quot;AvailableFacets&quot;</span><span class="p">]</span>
+		<span class="k">for</span> <span class="n">facet</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;SearchResult&quot;</span><span class="p">][</span><span class="s">&quot;AvailableFacets&quot;</span><span class="p">]:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">avail_facets_labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">facet</span><span class="p">[</span><span class="s">&quot;Label&quot;</span><span class="p">])</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">avail_facets_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">facet</span><span class="p">[</span><span class="s">&quot;Id&quot;</span><span class="p">])</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">rec_format</span>						<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;SearchResult&quot;</span><span class="p">][</span><span class="s">&quot;Data&quot;</span><span class="p">][</span><span class="s">&quot;RecordFormat&quot;</span><span class="p">]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">records_raw</span>					<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;SearchResult&quot;</span><span class="p">][</span><span class="s">&quot;Data&quot;</span><span class="p">][</span><span class="s">&quot;Records&quot;</span><span class="p">]</span>
+		<span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;SearchResult&quot;</span><span class="p">][</span><span class="s">&quot;Data&quot;</span><span class="p">][</span><span class="s">&quot;Records&quot;</span><span class="p">]:</span>
+			<span class="n">simple_rec</span>						<span class="o">=</span> <span class="p">{}</span>
+			<span class="n">simple_rec</span><span class="p">[</span><span class="s">&quot;PLink&quot;</span><span class="p">]</span>				<span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s">&quot;PLink&quot;</span><span class="p">]</span>
+			<span class="n">simple_rec</span><span class="p">[</span><span class="s">&quot;DbId&quot;</span><span class="p">]</span>				<span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s">&quot;Header&quot;</span><span class="p">][</span><span class="s">&quot;DbId&quot;</span><span class="p">]</span>
+			<span class="n">simple_rec</span><span class="p">[</span><span class="s">&quot;An&quot;</span><span class="p">]</span>				<span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s">&quot;Header&quot;</span><span class="p">][</span><span class="s">&quot;An&quot;</span><span class="p">]</span>
+			<span class="c"># TODO: are there other sources of titles?</span>
+			<span class="n">simple_rec</span><span class="p">[</span><span class="s">&quot;Title&quot;</span><span class="p">]</span>				<span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s">&quot;RecordInfo&quot;</span><span class="p">][</span><span class="s">&quot;BibRecord&quot;</span><span class="p">][</span><span class="s">&quot;BibEntity&quot;</span><span class="p">][</span><span class="s">&quot;Titles&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s">&quot;TitleFull&quot;</span><span class="p">]</span>
+			<span class="c"># TODO: add fulltext true/false</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">simple_records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">simple_rec</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">record</span><span class="p">[</span><span class="s">&quot;Header&quot;</span><span class="p">][</span><span class="s">&quot;DbId&quot;</span><span class="p">],</span> <span class="n">record</span><span class="p">[</span><span class="s">&quot;Header&quot;</span><span class="p">][</span><span class="s">&quot;An&quot;</span><span class="p">]))</span> 
+		<span class="k">return</span>
+	<span class="c"># End of load function</span>
+</div>
+<div class="viewcode-block" id="Results.pprint"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Results.pprint">[docs]</a>	<span class="k">def</span> <span class="nf">pprint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">print</span> <span class="s">&quot;Search Results&quot;</span>
+		<span class="k">print</span> <span class="s">&quot;---------------&quot;</span>
+		<span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">simple_records</span><span class="p">:</span>
+			<span class="k">print</span><span class="p">(</span><span class="s">&quot;Title: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">record</span><span class="p">[</span><span class="s">&quot;Title&quot;</span><span class="p">])</span>
+			<span class="k">print</span><span class="p">(</span><span class="s">&quot;PLink: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">record</span><span class="p">[</span><span class="s">&quot;PLink&quot;</span><span class="p">])</span>
+			<span class="k">print</span><span class="p">(</span><span class="s">&quot;DbId: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">record</span><span class="p">[</span><span class="s">&quot;DbId&quot;</span><span class="p">])</span>
+			<span class="k">print</span><span class="p">(</span><span class="s">&quot;An: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">record</span><span class="p">[</span><span class="s">&quot;An&quot;</span><span class="p">])</span>
+			<span class="k">print</span>
+		<span class="k">print</span> <span class="s">&quot;---------------&quot;</span>
+		<span class="k">return</span>
+<span class="c"># End of Results class</span>
+
+
+<span class="c"># Record object returned by Retrieve request</span></div></div>
+<div class="viewcode-block" id="Record"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Record">[docs]</a><span class="k">class</span> <span class="nc">Record</span><span class="p">:</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">dbid</span>							<span class="o">=</span> <span class="s">&quot;&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">an</span>								<span class="o">=</span> <span class="s">&quot;&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">pubtype</span>						<span class="o">=</span> <span class="s">&quot;&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">pubtype_id</span>						<span class="o">=</span> <span class="s">&quot;&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">plink</span>							<span class="o">=</span> <span class="s">&quot;&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">fulltext_avail</span>					<span class="o">=</span> <span class="bp">False</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">simple_title</span>					<span class="o">=</span> <span class="s">&quot;&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">simple_author</span>					<span class="o">=</span> <span class="s">&quot;&quot;</span>
+
+	<span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+		<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Record</span><span class="p">):</span>
+			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">an</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">an</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">dbid</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">dbid</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">return</span> <span class="bp">NotImplemented</span>
+	<span class="c"># End of [__eq__] function</span>
+
+	<span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+		<span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">NotImplemented</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">result</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">return</span> <span class="ow">not</span> <span class="n">result</span>
+
+<div class="viewcode-block" id="Record.load"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Record.load">[docs]</a>	<span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">dbid</span>							<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;Record&quot;</span><span class="p">][</span><span class="s">&quot;Header&quot;</span><span class="p">][</span><span class="s">&quot;DbId&quot;</span><span class="p">]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">an</span>								<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;Record&quot;</span><span class="p">][</span><span class="s">&quot;Header&quot;</span><span class="p">][</span><span class="s">&quot;An&quot;</span><span class="p">]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">pubtype</span>						<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;Record&quot;</span><span class="p">][</span><span class="s">&quot;Header&quot;</span><span class="p">][</span><span class="s">&quot;PubType&quot;</span><span class="p">]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">pubtype_id</span>						<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;Record&quot;</span><span class="p">][</span><span class="s">&quot;Header&quot;</span><span class="p">][</span><span class="s">&quot;PubTypeId&quot;</span><span class="p">]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">plink</span>							<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;Record&quot;</span><span class="p">][</span><span class="s">&quot;PLink&quot;</span><span class="p">]</span>
+		<span class="c"># TODO, determine fulltext status</span>
+		<span class="c">#self.fulltext_avail				= False</span>
+		<span class="c"># TODO: generate simple values for all possiblities</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">simple_title</span>					<span class="o">=</span> <span class="n">_get_item_data</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s">&quot;Record&quot;</span><span class="p">][</span><span class="s">&quot;Items&quot;</span><span class="p">],</span> <span class="s">&quot;Title&quot;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">simple_author</span>					<span class="o">=</span> <span class="n">_get_item_data</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s">&quot;Record&quot;</span><span class="p">][</span><span class="s">&quot;Items&quot;</span><span class="p">],</span> <span class="s">&quot;Author&quot;</span><span class="p">)</span>
+		<span class="k">return</span>
+</div>
+<div class="viewcode-block" id="Record.pprint"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Record.pprint">[docs]</a>	<span class="k">def</span> <span class="nf">pprint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">print</span><span class="p">(</span><span class="s">&quot;Title: </span><span class="si">%s</span><span class="s">&quot;</span>	<span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">simple_title</span><span class="p">)</span>
+		<span class="k">print</span><span class="p">(</span><span class="s">&quot;Author: </span><span class="si">%s</span><span class="s">&quot;</span>	<span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">simple_author</span><span class="p">)</span>
+		<span class="k">print</span><span class="p">(</span><span class="s">&quot;PLink: </span><span class="si">%s</span><span class="s">&quot;</span>	<span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">plink</span><span class="p">)</span>
+		<span class="k">print</span><span class="p">(</span><span class="s">&quot;DbId: </span><span class="si">%s</span><span class="s">&quot;</span>	<span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">dbid</span><span class="p">)</span>
+		<span class="k">print</span><span class="p">(</span><span class="s">&quot;An: </span><span class="si">%s</span><span class="s">&quot;</span>		<span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">an</span><span class="p">)</span>
+		<span class="k">print</span>
+		<span class="k">return</span>
+<span class="c"># End of Record class</span>
+</div></div>
+<span class="n">_version</span> <span class="o">=</span> <span class="n">get_distribution</span><span class="p">(</span><span class="s">&#39;ebscopy&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">version</span>
+
+<span class="c"># The shared Connection Pool</span>
+<span class="n">POOL</span>										<span class="o">=</span> <span class="n">ConnectionPool</span><span class="p">()</span>
+
+<span class="c">#EOF</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, EBSCO Information Services.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
