@@ -193,7 +193,7 @@
 <span class="sd">		:param string session_token: optional Session Token to include in header</span>
 <span class="sd">		:param int attempt: optional counter of request attempts</span>
 <span class="sd">		:returns: response from API</span>
-<span class="sd">		:rtype dict</span>
+<span class="sd">		:rtype: dict</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="n">valid_methods</span>						<span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s">&quot;CreateSession&quot;</span><span class="p">,</span> <span class="s">&quot;Info&quot;</span><span class="p">,</span> <span class="s">&quot;Search&quot;</span><span class="p">,</span> <span class="s">&quot;Retrieve&quot;</span><span class="p">,</span> <span class="s">&quot;EndSession&quot;</span><span class="p">,</span> <span class="s">&quot;UIDAuth&quot;</span><span class="p">,</span> <span class="s">&quot;SearchCriteria&quot;</span><span class="p">])</span>
 		<span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_methods</span><span class="p">:</span>
@@ -305,7 +305,7 @@
 <span class="sd">		:param string org: Arbitrary text for reporting </span>
 <span class="sd">		:param string guest: Treat the user as a guest or authenticated (n* | y)</span>
 <span class="sd">		:returns: SessionToken</span>
-<span class="sd">		:rtype string</span>
+<span class="sd">		:rtype: string</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="n">create_data</span>							<span class="o">=</span> <span class="p">{</span>
 												<span class="s">&quot;Profile&quot;</span><span class="p">:</span>	<span class="n">profile</span><span class="p">,</span>
@@ -340,7 +340,7 @@
 <span class="sd">		:param string user_id: API user_id</span>
 <span class="sd">		:param string password: API password</span>
 <span class="sd">		:returns: _Connection object</span>
-<span class="sd">		:rtype :class:`ebscopy._Connection`</span>
+<span class="sd">		:rtype: class:`ebscopy._Connection`</span>
 
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">new_user_id</span>					<span class="o">=</span> <span class="n">_use_or_get</span><span class="p">(</span><span class="s">&quot;user_id&quot;</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
@@ -424,7 +424,7 @@
 <span class="sd">		:param string method: API endpoint</span>
 <span class="sd">		:param dict data: Request data to POST</span>
 <span class="sd">		:returns: response from API</span>
-<span class="sd">		:rtype dict</span>
+<span class="sd">		:rtype: dict</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
 			<span class="k">raise</span> <span class="n">SessionError</span><span class="p">(</span><span class="s">&quot;This session is not active (probably explicitly closed)!&quot;</span><span class="p">)</span>
@@ -440,7 +440,7 @@
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Determine object equality based on SessionToken.</span>
 
-<span class="sd">		:rtype boolean</span>
+<span class="sd">		:rtype: boolean</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Session</span><span class="p">):</span>
 			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_token</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">session_token</span>
@@ -452,7 +452,7 @@
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Determine object inequality based on SessionToken.</span>
 
-<span class="sd">		:rtype boolean</span>
+<span class="sd">		:rtype: boolean</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
 		<span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">NotImplemented</span><span class="p">:</span>
@@ -473,7 +473,7 @@
 <span class="sd">		:param int page: page number to return (1)</span>
 <span class="sd">		:param string highlight: wrap search terms in &lt;highlight&gt; tags (y* | n)</span>
 <span class="sd">		:returns: Results object</span>
-<span class="sd">		:rtype :class:`ebscopy.Results`</span>
+<span class="sd">		:rtype: class:`ebscopy.Results`</span>
 
 <span class="sd">		&quot;&quot;&quot;</span>
 
@@ -516,7 +516,7 @@
 
 <span class="sd">		:param tuple dbid_an_tup: DbId and An to make </span>
 <span class="sd">		:returns: Record object</span>
-<span class="sd">		:rtype :class:`ebscopy.Record` </span>
+<span class="sd">		:rtype: class:`ebscopy.Record` </span>
 
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="n">retrieve_data</span>						<span class="o">=</span> <span class="p">{</span>
