@@ -112,13 +112,13 @@ class AuthenticationError(Exception):
 	"""
 	An error authenticating against the API.
 	"""
-    pass
+	pass
 
 class SessionError(Exception):
 	"""
 	An error creating a Session with the API.
 	"""
-    pass
+	pass
 
 class _Connection:
 	"""
@@ -241,7 +241,7 @@ class _Connection:
 					"UserId":	self.user_id,
 					"Password":	self.password,
 					"InterfaceId":	self.interface_id
-			  	}
+		}
 		auth_response						= self.request("UIDAuth", auth_data)
 		logging.debug("_Connection.connect: UIDAuth response: %s", auth_response)
 
@@ -301,6 +301,7 @@ class ConnectionPool(Borg):
 		:param string password: API password
 		:returns: _Connection object
 		:rtype :class:`ebscopy._Connection`
+
 		"""
 		self.new_user_id					= _use_or_get("user_id", user_id)
 		self.new_password					= _use_or_get("password", password)
@@ -433,6 +434,7 @@ class Session:
 		:param string highlight: wrap search terms in <highlight> tags (y* | n)
 		:returns: Results object
 		:rtype :class:`ebscopy.Results`
+
 		"""
 
 		search_data							=	{
@@ -474,7 +476,8 @@ class Session:
 
 		:param tuple dbid_an_tup: DbId and An to make 
 		:returns: Record object
-		:rtype :class:`ebscopy.Record`
+		:rtype :class:`ebscopy.Record` 
+
 		"""
 		retrieve_data						= {
 					"DbId": dbid_an_tup[0],
@@ -502,7 +505,7 @@ class Session:
 		"""
 		end_data							= {
 					"SessionToken": self.session_token
-				  }
+		}
 		end_response						= self._request("EndSession", end_data)
 
 		if end_response["IsSuccessful"] == "y": 
