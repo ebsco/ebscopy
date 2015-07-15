@@ -74,14 +74,14 @@
 <span id="ebscopy-ebscopy-module"></span><h2>ebscopy.ebscopy module<a class="headerlink" href="#module-ebscopy.ebscopy" title="Permalink to this headline">¶</a></h2>
 <dl class="exception">
 <dt id="ebscopy.ebscopy.AuthenticationError">
-<em class="property">exception </em><code class="descclassname">ebscopy.ebscopy.</code><code class="descname">AuthenticationError</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#AuthenticationError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.AuthenticationError" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><code class="descname">AuthenticationError</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#AuthenticationError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.AuthenticationError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></p>
 <p>An error authenticating against the API.</p>
 </dd></dl>
 
 <dl class="class">
 <dt id="ebscopy.ebscopy.Borg">
-<em class="property">class </em><code class="descclassname">ebscopy.ebscopy.</code><code class="descname">Borg</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Borg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Borg" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descname">Borg</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Borg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Borg" title="Permalink to this definition">¶</a></dt>
 <dd><p>All objects of class share same state.</p>
 <p>Extended by ConnectionPool. Based on Alex Martelli&#8217;s code:
 <a class="reference external" href="http://www.aleax.it/5ep.html">http://www.aleax.it/5ep.html</a></p>
@@ -89,7 +89,7 @@
 
 <dl class="class">
 <dt id="ebscopy.ebscopy.ConnectionPool">
-<em class="property">class </em><code class="descclassname">ebscopy.ebscopy.</code><code class="descname">ConnectionPool</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#ConnectionPool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.ConnectionPool" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descname">ConnectionPool</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#ConnectionPool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.ConnectionPool" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#ebscopy.ebscopy.Borg" title="ebscopy.ebscopy.Borg"><code class="xref py py-class docutils literal"><span class="pre">ebscopy.ebscopy.Borg</span></code></a></p>
 <p>Container for _Connection objects.</p>
 <dl class="method">
@@ -121,7 +121,7 @@
 
 <dl class="class">
 <dt id="ebscopy.ebscopy.Record">
-<em class="property">class </em><code class="descclassname">ebscopy.ebscopy.</code><code class="descname">Record</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Record"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Record" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descname">Record</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Record"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Record" title="Permalink to this definition">¶</a></dt>
 <dd><p>Single Record object returned by Retrieve request</p>
 <dl class="method">
 <dt id="ebscopy.ebscopy.Record.load">
@@ -147,7 +147,7 @@
 
 <dl class="class">
 <dt id="ebscopy.ebscopy.Results">
-<em class="property">class </em><code class="descclassname">ebscopy.ebscopy.</code><code class="descname">Results</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Results" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descname">Results</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Results" title="Permalink to this definition">¶</a></dt>
 <dd><p>Results object returned by an API Search request.</p>
 <dl class="method">
 <dt id="ebscopy.ebscopy.Results.load">
@@ -173,7 +173,7 @@
 
 <dl class="class">
 <dt id="ebscopy.ebscopy.Session">
-<em class="property">class </em><code class="descclassname">ebscopy.ebscopy.</code><code class="descname">Session</code><span class="sig-paren">(</span><em>connection=None</em>, <em>profile=''</em>, <em>org=''</em>, <em>guest=''</em>, <em>user_id=''</em>, <em>password=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Session"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Session" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descname">Session</code><span class="sig-paren">(</span><em>connection=None</em>, <em>profile=''</em>, <em>org=''</em>, <em>guest=''</em>, <em>user_id=''</em>, <em>password=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Session"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Session" title="Permalink to this definition">¶</a></dt>
 <dd><p>A single user&#8217;s API session object.</p>
 <dl class="method">
 <dt id="ebscopy.ebscopy.Session.end">
@@ -232,7 +232,7 @@
 
 <dl class="exception">
 <dt id="ebscopy.ebscopy.SessionError">
-<em class="property">exception </em><code class="descclassname">ebscopy.ebscopy.</code><code class="descname">SessionError</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#SessionError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.SessionError" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><code class="descname">SessionError</code><a class="reference internal" href="_modules/ebscopy/ebscopy.html#SessionError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.SessionError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></p>
 <p>An error creating a Session with the API.</p>
 </dd></dl>
