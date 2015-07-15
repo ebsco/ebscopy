@@ -1,5 +1,5 @@
-ebscopy
-=======
+.
+=
 
 .. toctree::
    :maxdepth: 4
