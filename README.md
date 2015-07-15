@@ -25,6 +25,7 @@ pip install ebscopy
 ```
 
 * More info: [INSTALL.md](docs/INSTALL.md)
+* [PYPI Page](https://pypi.python.org/pypi/ebscopy)
 
 # Links
 * [EBSCO Discovery](https://www.ebscohost.com/discovery)
