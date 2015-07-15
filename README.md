@@ -16,7 +16,8 @@ results.pprint()
 session.end()
 ```
 
-* More info: [USAGE.md](docs/USAGE.md)
+* More examples: [USAGE.md](docs/USAGE.md)
+* [Complete module documentation](http://ebscopy.readthedocs.org/en/latest/)
 
 # Installation
 ```python

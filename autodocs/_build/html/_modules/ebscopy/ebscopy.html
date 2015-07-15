@@ -372,6 +372,9 @@
 	<span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Return number of _Connection objects in the pool.</span>
+
+<span class="sd">		:returns: size of pool</span>
+<span class="sd">		:rtype: int</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="p">)</span>
 	<span class="c"># End of [len] function</span>
@@ -448,6 +451,7 @@
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Determine object equality based on SessionToken.</span>
 
+<span class="sd">		:returns: equality</span>
 <span class="sd">		:rtype: boolean</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Session</span><span class="p">):</span>
@@ -460,6 +464,7 @@
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Determine object inequality based on SessionToken.</span>
 
+<span class="sd">		:returns: inequality</span>
 <span class="sd">		:rtype: boolean</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
@@ -482,7 +487,6 @@
 <span class="sd">		:param string highlight: wrap search terms in &lt;highlight&gt; tags (y* | n)</span>
 <span class="sd">		:returns: Results object</span>
 <span class="sd">		:rtype: class:`ebscopy.Results`</span>
-
 <span class="sd">		&quot;&quot;&quot;</span>
 
 		<span class="n">search_data</span>							<span class="o">=</span>	<span class="p">{</span>
@@ -525,7 +529,6 @@
 <span class="sd">		:param tuple dbid_an_tup: DbId and An to make </span>
 <span class="sd">		:returns: Record object</span>
 <span class="sd">		:rtype: class:`ebscopy.Record` </span>
-
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="n">retrieve_data</span>						<span class="o">=</span> <span class="p">{</span>
 					<span class="s">&quot;DbId&quot;</span><span class="p">:</span> <span class="n">dbid_an_tup</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
@@ -565,9 +568,11 @@
 	<span class="c"># End of [end] function</span>
 <span class="c"># End of [Session] class</span>
 
-
-<span class="c"># Results object returned by Search request</span></div></div>
+</div></div>
 <div class="viewcode-block" id="Results"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Results">[docs]</a><span class="k">class</span> <span class="nc">Results</span><span class="p">:</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Results object returned by an API Search request.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
 
 	<span class="c"># Initialize </span>
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -598,6 +603,11 @@
 
 	<span class="c"># Load with dict</span>
 <div class="viewcode-block" id="Results.load"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Results.load">[docs]</a>	<span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Load and process the response from an API Search request.</span>
+
+<span class="sd">		:param dict data: Dict containing the API response from a Search request</span>
+<span class="sd">		&quot;&quot;&quot;</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">stat_total_hits</span>				<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;SearchResult&quot;</span><span class="p">][</span><span class="s">&quot;Statistics&quot;</span><span class="p">][</span><span class="s">&quot;TotalHits&quot;</span><span class="p">]</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">stat_total_time</span>				<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;SearchResult&quot;</span><span class="p">][</span><span class="s">&quot;Statistics&quot;</span><span class="p">][</span><span class="s">&quot;TotalSearchTime&quot;</span><span class="p">]</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">stat_databases_raw</span>				<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;SearchResult&quot;</span><span class="p">][</span><span class="s">&quot;Statistics&quot;</span><span class="p">][</span><span class="s">&quot;Databases&quot;</span><span class="p">]</span>
@@ -625,6 +635,9 @@
 	<span class="c"># End of load function</span>
 </div>
 <div class="viewcode-block" id="Results.pprint"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Results.pprint">[docs]</a>	<span class="k">def</span> <span class="nf">pprint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Print the list of results in a not displeasing manner.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
 		<span class="k">print</span> <span class="s">&quot;Search Results&quot;</span>
 		<span class="k">print</span> <span class="s">&quot;---------------&quot;</span>
 		<span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">simple_records</span><span class="p">:</span>
@@ -637,9 +650,11 @@
 		<span class="k">return</span>
 <span class="c"># End of Results class</span>
 
-
-<span class="c"># Record object returned by Retrieve request</span></div></div>
+</div></div>
 <div class="viewcode-block" id="Record"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Record">[docs]</a><span class="k">class</span> <span class="nc">Record</span><span class="p">:</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Single Record object returned by Retrieve request</span>
+<span class="sd">	&quot;&quot;&quot;</span>
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">dbid</span>							<span class="o">=</span> <span class="s">&quot;&quot;</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">an</span>								<span class="o">=</span> <span class="s">&quot;&quot;</span>
@@ -665,6 +680,11 @@
 			<span class="k">return</span> <span class="ow">not</span> <span class="n">result</span>
 
 <div class="viewcode-block" id="Record.load"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Record.load">[docs]</a>	<span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Load and process the response from an API Retrieve request.</span>
+
+<span class="sd">		:param dict data: Dict containing the API response from a Retrieve request</span>
+<span class="sd">		&quot;&quot;&quot;</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">dbid</span>							<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;Record&quot;</span><span class="p">][</span><span class="s">&quot;Header&quot;</span><span class="p">][</span><span class="s">&quot;DbId&quot;</span><span class="p">]</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">an</span>								<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;Record&quot;</span><span class="p">][</span><span class="s">&quot;Header&quot;</span><span class="p">][</span><span class="s">&quot;An&quot;</span><span class="p">]</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">pubtype</span>						<span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&quot;Record&quot;</span><span class="p">][</span><span class="s">&quot;Header&quot;</span><span class="p">][</span><span class="s">&quot;PubType&quot;</span><span class="p">]</span>
@@ -678,6 +698,9 @@
 		<span class="k">return</span>
 </div>
 <div class="viewcode-block" id="Record.pprint"><a class="viewcode-back" href="../../ebscopy.html#ebscopy.ebscopy.Record.pprint">[docs]</a>	<span class="k">def</span> <span class="nf">pprint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Print the list of results in a not displeasing manner.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
 		<span class="k">print</span><span class="p">(</span><span class="s">&quot;Title: </span><span class="si">%s</span><span class="s">&quot;</span>	<span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">simple_title</span><span class="p">)</span>
 		<span class="k">print</span><span class="p">(</span><span class="s">&quot;Author: </span><span class="si">%s</span><span class="s">&quot;</span>	<span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">simple_author</span><span class="p">)</span>
 		<span class="k">print</span><span class="p">(</span><span class="s">&quot;PLink: </span><span class="si">%s</span><span class="s">&quot;</span>	<span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">plink</span><span class="p">)</span>

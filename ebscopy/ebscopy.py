@@ -323,6 +323,9 @@ class ConnectionPool(Borg):
 	def __len__(self):
 		"""
 		Return number of _Connection objects in the pool.
+
+		:returns: size of pool
+		:rtype: int
 		"""
 		return len(self.pool)
 	# End of [len] function
@@ -399,6 +402,7 @@ class Session:
 		"""
 		Determine object equality based on SessionToken.
 
+		:returns: equality
 		:rtype: boolean
 		"""
 		if isinstance(other, Session):
@@ -411,6 +415,7 @@ class Session:
 		"""
 		Determine object inequality based on SessionToken.
 
+		:returns: inequality
 		:rtype: boolean
 		"""
 		result = self.__eq__(other)
@@ -433,7 +438,6 @@ class Session:
 		:param string highlight: wrap search terms in <highlight> tags (y* | n)
 		:returns: Results object
 		:rtype: class:`ebscopy.Results`
-
 		"""
 
 		search_data							=	{
@@ -476,7 +480,6 @@ class Session:
 		:param tuple dbid_an_tup: DbId and An to make 
 		:returns: Record object
 		:rtype: class:`ebscopy.Record` 
-
 		"""
 		retrieve_data						= {
 					"DbId": dbid_an_tup[0],
@@ -517,8 +520,10 @@ class Session:
 # End of [Session] class
 
 
-# Results object returned by Search request
 class Results:
+	"""
+	Results object returned by an API Search request.
+	"""
 
 	# Initialize 
 	def __init__(self):
@@ -549,6 +554,11 @@ class Results:
 
 	# Load with dict
 	def load(self, data):
+		"""
+		Load and process the response from an API Search request.
+
+		:param dict data: Dict containing the API response from a Search request
+		"""
 		self.stat_total_hits				= data["SearchResult"]["Statistics"]["TotalHits"]
 		self.stat_total_time				= data["SearchResult"]["Statistics"]["TotalSearchTime"]
 		self.stat_databases_raw				= data["SearchResult"]["Statistics"]["Databases"]
@@ -576,6 +586,9 @@ class Results:
 	# End of load function
 
 	def pprint(self):
+		"""
+		Print the list of results in a not displeasing manner.
+		"""
 		print "Search Results"
 		print "---------------"
 		for record in self.simple_records:
@@ -589,8 +602,10 @@ class Results:
 # End of Results class
 
 
-# Record object returned by Retrieve request
 class Record:
+	"""
+	Single Record object returned by Retrieve request
+	"""
 	def __init__(self):
 		self.dbid							= ""
 		self.an								= ""
@@ -616,6 +631,11 @@ class Record:
 			return not result
 
 	def load(self, data):
+		"""
+		Load and process the response from an API Retrieve request.
+
+		:param dict data: Dict containing the API response from a Retrieve request
+		"""
 		self.dbid							= data["Record"]["Header"]["DbId"]
 		self.an								= data["Record"]["Header"]["An"]
 		self.pubtype						= data["Record"]["Header"]["PubType"]
@@ -629,6 +649,9 @@ class Record:
 		return
 
 	def pprint(self):
+		"""
+		Print the list of results in a not displeasing manner.
+		"""
 		print("Title: %s"	% self.simple_title)
 		print("Author: %s"	% self.simple_author)
 		print("PLink: %s"	% self.plink)
