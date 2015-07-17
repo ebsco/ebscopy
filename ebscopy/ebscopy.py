@@ -50,21 +50,28 @@ def _parse_highlight(text):
 
 # TODO: Do we need this? 
 # TODO: Use group instead of name?
-def _get_item_data(items, name):
+def _get_item_data(items, key, value):
 	"""
-	Return the ``Data`` component of item ``name`` from a list of dictionaries
+	Return the ``Data`` component of a dict with the ``key`` of ''value'' from a list of dicts
 
-	:param list items: a list of dictionaries, each of which contains ``Name`` and ``Data`` keys
-	:param string name: the ``Name`` to find
-	:rtype: dict
+	:param list items: a list of dicts, each of which contains keys, inlcuding ``Data``
+	:param string key: the key to search
+	:param string value: the value to search for
+	:rtype: string
 	"""
-	dictionary								= next((item for item in items if item["Name"] == name), None)
-	if dictionary:
-		return dictionary["Data"]
+	dt								= next((item for item in items if item.get(key) == value), None)
+	if dt:
+		return dt["Data"]
 	else:
-		logging.warn("_get_item_data: No match for %s in items!", name)
+		logging.warn("_get_item_data: No match for %s:%s in items!", key, value)
 		return None
 # End of [_get_item_data] function
+
+def _get_item_data_by_name(items, name):
+	return _get_item_data(items, "Name", name)
+	
+def _get_item_data_by_group(items, group):
+	return _get_item_data(items, "Group", group)
 
 def _use_or_get(kind, value=""):
 	"""
@@ -137,9 +144,23 @@ class _Connection:
 		"""
 		self.user_id						= user_id
 		self.password						= password
-		self.userpass						= (user_id, password)
+		self.userpass						= (self.user_id, self.password)
 		self.interface_id					= "ebscopy %s" % (_version)
+		self.auth_token						= ""
+		self.active							= False
 	# End of [__init__] function
+
+	def __str__(self):
+		return "|".join([str(int(self)), self.user_id, self.password, str(self.active)])
+
+	def __int__(self):
+		return POOL.pool.index(self)
+
+	def __eq__(self, other):
+		if isinstance(other, Session):
+			return self.userpass == other.userpass
+		else:
+			return NotImplemented
 
 	# Internal method to generate an HTTP request 
 	def request(self, method, data, session_token=None, attempt=0):
@@ -205,21 +226,28 @@ class _Connection:
 			logging.debug("_Connection.request: Request response object: %s", r)
 			logging.debug("_Connection.request: Error text: %s", r.text)
 
-			if r.json().get("ErrorNumber") in ("104", "107"):							# Authentication Token Invalid or Missing
-				logging.warn("_Connection.request: Bad AuthToken, trying to get another.")
-				self.connect()
-				logging.warn("_Connection.request: Rerunning original request.")
-				return self.request(method, data, session_token, attempt)
-			elif r.json().get("ErrorNumber") in ("108", "109"):							# Session Token Missing or Invalid
-				logging.warn("_Connection.request: Bad Session, raising SessionError.")
-				raise SessionError
-			elif r.json().get("ErrorCode") == 1102:										# ErrorCode is an integer, not a string
-				raise AuthenticationError("Invalid credentials!")
-			elif r.json().get("ErrorCode") == 1103:										# ErrorCode is an integer, not a string
-				raise AuthenticationError("No valid profiles found for customer/group combination.")
+			if r.json().get("ErrorNumber"):
+				if r.json().get("ErrorNumber") in ("104", "107"):							# Authentication Token Invalid or Missing
+					logging.warn("_Connection.request: Bad AuthToken, trying to get another.")
+					self.active					= False
+					self.connect()
+					logging.warn("_Connection.request: Rerunning original request.")
+					return self.request(method, data, session_token, attempt)
+				elif r.json().get("ErrorNumber") in ("108", "109"):							# Session Token Missing or Invalid
+					raise SessionError("Bad Session!")
+				elif r.json().get("ErrorNumber") in ("144"):								# Account/Profile mismatch
+					raise ValueError("Account/Profile mismatch!")
+				else:
+					raise HTTPError("Unexpected ErrorNumber from server!")
+			elif r.json().get("ErrorCode"):
+				if r.json().get("ErrorCode") == 1102:										# ErrorCode is an integer, not a string
+					raise AuthenticationError("Invalid credentials!")
+				elif r.json().get("ErrorCode") == 1103:										# ErrorCode is an integer, not a string
+					raise AuthenticationError("No valid profiles found for customer/group combination.")
+				else:
+					raise HTTPError("Unexpected ErrorCode from server!")
 			else:
-				raise HTTPError("Unexpected error from server!")
-	
+				raise HTTPError("Completely unexpected error from server!")
 	
 		return r.json()
 	# End of [request] function
@@ -230,7 +258,7 @@ class _Connection:
 		"""
 	
 		# I think this is okay. Safe for new connects, and no need for a reconnect wrapper function to do it.
-		self.auth_token					= None
+		self.auth_token						= ""
 
 		logging.debug("_Connection.connect: UserID: %s", self.user_id)
 		logging.debug("_Connection.connect: Password: %s", self.password)
@@ -249,7 +277,9 @@ class _Connection:
 		self.auth_timeout					= auth_response["AuthTimeout"]
 		self.auth_timeout_time				= datetime.now() + timedelta(seconds=int(self.auth_timeout))
 
-		if not self.auth_token:
+		if self.auth_token:
+			self.active						= True
+		else:
 			raise AuthenticationError("Didn't get AuthToken from API?!")
 
 		return
@@ -350,13 +380,14 @@ class Session:
 		:param string user_id: optional EDS user_id to use
 		:param string password: optional EDS password to use
 		"""
+		self.active							= False	
 
 		if connection:
 			self.connection					= connection
 		else:
 			self.connection					= POOL.get(user_id, password)
 
-		# Required for Session
+		# Required for API call
 		self.profile						= _use_or_get("profile", profile)
 		self.org							= _use_or_get("org", org)
 		self.guest							= _use_or_get("guest", guest)
@@ -365,9 +396,7 @@ class Session:
 		if self.session_token:
 			self.active							= True
 		else:
-			self.active							= False
 			raise SessionError("No Session Token received from API!")
-
 
 		# Get Info from API; used by tests
 		# TODO: parse some of this out
@@ -398,6 +427,9 @@ class Session:
 			return self.connection.request(method, data, self.session_token)
 	# End of [_request] function
 
+	def __str__(self):
+		return "||".join([str(self.connection), "|".join([self.profile, self.org, self.guest, str(self.active)])])
+
 	def __eq__(self, other):
 		"""
 		Determine object equality based on SessionToken.
@@ -423,6 +455,11 @@ class Session:
 			return result
 		else:
 			return not result
+
+# TODO: change to __exit__ for use as context thingie
+#	def __del__(self):
+#		if self.active:
+#			self.end()
 
 	# Do a search
 	def search(self, query, mode="all", sort="relevance", inc_facets="y", view="brief", rpp=20, page=1, highlight="y"):
@@ -505,9 +542,14 @@ class Session:
 		"""
 		End an active Session.
 		"""
+
+		if not self.active:
+			logging.warn("Session.end: Attempt to end inactive Session!")
+			return
+
 		end_data							= {
-					"SessionToken": self.session_token
-		}
+												"SessionToken": self.session_token
+											}
 		end_response						= self._request("EndSession", end_data)
 
 		if end_response["IsSuccessful"] == "y": 
@@ -533,10 +575,21 @@ class Results:
 		self.avail_facets_raw				= []
 		self.avail_facets_labels			= []
 		self.avail_facets_ids				= []
-		self.simple_records					= []							# List of dicts w/ keys: PLink, DbID, An, Title, Author?
+		self.records_simple					= []							# List of dicts w/ keys: PLink, DbID, An, Title, Author?
 		self.rec_format						= ""							# String straight from JSON
 		self.records_raw					= []							# List of raw Records straight from JSON
 		self.record							= []							# List of DbId/An tuples
+
+	## Internal helper functions
+	def __str__(self):
+		string								= ""
+		for dt in self.search_queries:
+			string							= string + dt.get("Term")
+		return string
+	# Total number of hits, not hits in this page
+	def __len__(self):
+		return self.stat_total_hits
+	# End of [__len__] function
 
 	def __eq__(self, other):
 		if isinstance(other, Results):
@@ -551,6 +604,35 @@ class Results:
 			return result
 		else:
 			return not result
+	# End of [__ne__] function
+	
+ 	def __lt__(self, other):
+		if isinstance(other, Results):
+			return self.stat_total_hits < other.stat_total_hits
+		else:
+			return NotImplemented
+	# End of [__lt__] function
+
+ 	def __le__(self, other):
+		if isinstance(other, Results):
+			return self.stat_total_hits <= other.stat_total_hits
+		else:
+			return NotImplemented
+	# End of [__le__] function
+
+ 	def __gt__(self, other):
+		if isinstance(other, Results):
+			return self.stat_total_hits > other.stat_total_hits
+		else:
+			return NotImplemented
+	# End of [__gt__] function
+
+ 	def __ge__(self, other):
+		if isinstance(other, Results):
+			return self.stat_total_hits >= other.stat_total_hits
+		else:
+			return NotImplemented
+	# End of [__ge__] function
 
 	# Load with dict
 	def load(self, data):
@@ -564,24 +646,29 @@ class Results:
 		self.stat_databases_raw				= data["SearchResult"]["Statistics"]["Databases"]
 
 		self.search_criteria				= data["SearchRequest"]["SearchCriteria"]
+		self.search_queries					= data["SearchRequest"]["SearchCriteria"]["Queries"]
 
-		self.avail_facets_raw				= data["SearchResult"]["AvailableFacets"]
-		for facet in data["SearchResult"]["AvailableFacets"]:
-			self.avail_facets_labels.append(facet["Label"])
-			self.avail_facets_ids.append(facet["Id"])
+		if self.stat_total_hits > 0:
+			self.avail_facets_raw			= data.get("SearchResult",{}).get("AvailableFacets",[])
+			for facet in self.avail_facets_raw:
+				self.avail_facets_labels.append(facet["Label"])
+				self.avail_facets_ids.append(facet["Id"])
+	
+			self.rec_format					= data["SearchResult"]["Data"]["RecordFormat"]
+			self.records_raw				= data["SearchResult"]["Data"]["Records"]
+			for record in data["SearchResult"]["Data"]["Records"]:
+				simple_rec					= {}
+				simple_rec["PLink"]			= record["PLink"]
+				simple_rec["DbId"]			= record["Header"]["DbId"]
+				simple_rec["An"]			= record["Header"]["An"]
+				# TODO: are there other sources of titles?
+				simple_rec["Title"]			= record["RecordInfo"]["BibRecord"]["BibEntity"]["Titles"][0]["TitleFull"]
+				if record["FullText"]["Text"]["Availability"] > 0:
+					simple_rec["FTAvail"]	= True
 
-		self.rec_format						= data["SearchResult"]["Data"]["RecordFormat"]
-		self.records_raw					= data["SearchResult"]["Data"]["Records"]
-		for record in data["SearchResult"]["Data"]["Records"]:
-			simple_rec						= {}
-			simple_rec["PLink"]				= record["PLink"]
-			simple_rec["DbId"]				= record["Header"]["DbId"]
-			simple_rec["An"]				= record["Header"]["An"]
-			# TODO: are there other sources of titles?
-			simple_rec["Title"]				= record["RecordInfo"]["BibRecord"]["BibEntity"]["Titles"][0]["TitleFull"]
-			# TODO: add fulltext true/false
-			self.simple_records.append(simple_rec)
-			self.record.append((record["Header"]["DbId"], record["Header"]["An"])) 
+				self.records_simple.append(simple_rec)
+				self.record.append((record["Header"]["DbId"], record["Header"]["An"])) 
+
 		return
 	# End of load function
 
@@ -591,7 +678,7 @@ class Results:
 		"""
 		print "Search Results"
 		print "---------------"
-		for record in self.simple_records:
+		for record in self.records_simple:
 			print("Title: %s" % record["Title"])
 			print("PLink: %s" % record["PLink"])
 			print("DbId: %s" % record["DbId"])
@@ -644,8 +731,9 @@ class Record:
 		# TODO, determine fulltext status
 		#self.fulltext_avail				= False
 		# TODO: generate simple values for all possiblities
-		self.simple_title					= _get_item_data(data["Record"]["Items"], "Title")
-		self.simple_author					= _get_item_data(data["Record"]["Items"], "Author")
+		self.simple_title					= _get_item_data_by_group(data["Record"]["Items"], "Ti")
+		self.simple_author					= _get_item_data_by_group(data["Record"]["Items"], "Au")
+		self.simple_subject					= _get_item_data_by_group(data["Record"]["Items"], "Su")
 		return
 
 	def pprint(self):
