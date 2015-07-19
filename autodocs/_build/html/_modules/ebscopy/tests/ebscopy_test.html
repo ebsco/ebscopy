@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>ebscopy.tests.ebscopy_test &mdash; ebscopy 0.0.11 documentation</title>
+    <title>ebscopy.tests.ebscopy_test &mdash; ebscopy 0.0.12 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.11',
+        VERSION:     '0.0.12',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="ebscopy 0.0.11 documentation" href="../../../index.html" />
+    <link rel="top" title="ebscopy 0.0.12 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">ebscopy 0.0.11 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">ebscopy 0.0.12 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>  
@@ -160,17 +160,21 @@
 	<span class="c"># End of [test_sessions_via_connections] function</span>
 <span class="c"># End of [CreateConnectionFirst] class</span>
 </div></div>
-<div class="viewcode-block" id="Search"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.Search">[docs]</a><span class="k">class</span> <span class="nc">Search</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
-<div class="viewcode-block" id="Search.test_search_results"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.Search.test_search_results">[docs]</a>	<span class="k">def</span> <span class="nf">test_search_results</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SearchTests"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.SearchTests">[docs]</a><span class="k">class</span> <span class="nc">SearchTests</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="SearchTests.test_search_results"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.SearchTests.test_search_results">[docs]</a>	<span class="k">def</span> <span class="nf">test_search_results</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="n">sess</span>								<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
-		<span class="n">res</span>									<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&quot;yellow&quot;</span><span class="p">)</span>
+		<span class="n">res_yellow</span>							<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&quot;yellow&quot;</span><span class="p">)</span>
 
-		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">stat_total_hits</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">stat_total_time</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">avail_facets_labels</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">res_yellow</span><span class="o">.</span><span class="n">stat_total_hits</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">res_yellow</span><span class="o">.</span><span class="n">stat_total_time</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">res_yellow</span><span class="o">.</span><span class="n">avail_facets_labels</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">res_yellow</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">)</span>
 
-		<span class="n">rec</span>									<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+		<span class="n">res_yellow_blue</span>						<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&quot;yellow blue&quot;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">res_yellow</span><span class="p">,</span> <span class="n">res_yellow_blue</span><span class="p">)</span>
+
+		<span class="n">rec</span>									<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">res_yellow</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
 		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Record</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">dbid</span><span class="p">,</span> <span class="p">(</span><span class="nb">unicode</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
@@ -199,6 +203,7 @@
 <span class="c"># End of [RecordTests] class</span>
 </div></div>
 <div class="viewcode-block" id="TimeoutTests"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.TimeoutTests">[docs]</a><span class="k">class</span> <span class="nc">TimeoutTests</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+	<span class="nd">@unittest.skip</span><span class="p">(</span><span class="s">&quot;takes too long&quot;</span><span class="p">)</span>
 <div class="viewcode-block" id="TimeoutTests.test_auth_timeout"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.TimeoutTests.test_auth_timeout">[docs]</a>	<span class="k">def</span> <span class="nf">test_auth_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="n">conn</span>							<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">POOL</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 		<span class="n">sess</span>							<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">(</span><span class="n">connection</span><span class="o">=</span><span class="n">conn</span><span class="p">)</span>
@@ -246,7 +251,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">ebscopy 0.0.11 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">ebscopy 0.0.12 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>
