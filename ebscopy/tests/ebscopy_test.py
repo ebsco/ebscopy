@@ -111,17 +111,21 @@ class CreateConnectionFirst(unittest.TestCase):
 	# End of [test_sessions_via_connections] function
 # End of [CreateConnectionFirst] class
 
-class Search(unittest.TestCase):
+class SearchTests(unittest.TestCase):
 	def test_search_results(self):
 		sess								= ebscopy.Session()
-		res									= sess.search("yellow")
+		res_yellow							= sess.search("yellow")
 
-		self.assertGreater(res.stat_total_hits, 0)
-		self.assertGreater(res.stat_total_time, 0)
-		self.assertGreater(len(res.avail_facets_labels), 0)
-		self.assertIsInstance(res.record[0], tuple)
+		self.assertGreater(res_yellow.stat_total_hits, 0)
+		self.assertGreater(res_yellow.stat_total_time, 0)
+		self.assertGreater(len(res_yellow.avail_facets_labels), 0)
+		self.assertIsInstance(res_yellow.record[0], tuple)
 
-		rec									= sess.retrieve(res.record[0])
+
+		res_yellow_blue						= sess.search("yellow blue")
+		self.assertGreater(res_yellow, res_yellow_blue)
+
+		rec									= sess.retrieve(res_yellow.record[0])
 
 		self.assertIsInstance(rec, ebscopy.Record)
 		self.assertIsInstance(rec.dbid, (unicode, str))
@@ -150,6 +154,7 @@ class RecordTests(unittest.TestCase):
 # End of [RecordTests] class
 
 class TimeoutTests(unittest.TestCase):
+	@unittest.skip("takes too long")
 	def test_auth_timeout(self):
 		conn							= ebscopy.POOL.get()
 		sess							= ebscopy.Session(connection=conn)
