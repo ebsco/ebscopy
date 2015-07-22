@@ -703,6 +703,9 @@ class Record:
 		self.simple_title					= ""
 		self.simple_author					= ""
 
+	def __str__(self):
+		return "|".join([self.dbid, self.an, self.simple_title, self.simple_author])
+
 	def __eq__(self, other):
 		if isinstance(other, Record):
 			return self.an == other.an and self.dbid == other.dbid
