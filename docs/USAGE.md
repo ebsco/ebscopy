@@ -54,7 +54,7 @@ print r.records_raw[0]
 
 * Accessing simple data
 ```python
-print r.simple_records[0]
+print r.records_simple[0]
 ```
 
 ## Retrieving Records

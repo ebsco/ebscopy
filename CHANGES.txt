@@ -2,4 +2,5 @@ v0.0.1, 2015-06-23 -- Initial release.
 v0.0.2, 2015-06-30 -- Packaging.
 v0.0.5, 2015-07-09 -- Refactored to have Sessions that get a Connection from the POOL
 v0.0.6, 2015-07-09 -- Actually working with pip
+v0.0.7, 2016-10-21 -- Major updates, including pagination and much more robust records_simple
 
