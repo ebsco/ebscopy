@@ -4,7 +4,7 @@
 #	be able to use IP
 #	close on destroy
 
-from pkg_resources import get_distribution
+from pkg_resources import get_distribution									# Automates version setting for autodocs
 import logging																# Smart logging
 import os																	# Get ENV variables with auth info
 import json																	# Manage data
