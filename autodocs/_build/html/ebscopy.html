@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>ebscopy package &mdash; ebscopy 0.0.12 documentation</title>
+    <title>ebscopy package &mdash; ebscopy 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.12',
+        VERSION:     '0.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="ebscopy 0.0.12 documentation" href="index.html" />
+    <link rel="top" title="ebscopy 0.1.0 documentation" href="index.html" />
     <link rel="next" title="ebscopy.tests package" href="ebscopy.tests.html" />
     <link rel="prev" title="Welcome to ebscopy’s documentation!" href="index.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="index.html" title="Welcome to ebscopy’s documentation!"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">ebscopy 0.0.12 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">ebscopy 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -176,9 +176,77 @@
 <em class="property">class </em><code class="descname">Session</code><span class="sig-paren">(</span><em>connection=None</em>, <em>profile=''</em>, <em>org=''</em>, <em>guest=''</em>, <em>user_id=''</em>, <em>password=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Session"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Session" title="Permalink to this definition">¶</a></dt>
 <dd><p>A single user&#8217;s API session object.</p>
 <dl class="method">
+<dt id="ebscopy.ebscopy.Session.add_action">
+<code class="descname">add_action</code><span class="sig-paren">(</span><em>action</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Session.add_action"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Session.add_action" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an Action to an existing search.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>action</strong> (<em>string</em>) &#8211; EDS API Action string</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Results object</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">class:<cite>ebscopy.Results</cite></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="ebscopy.ebscopy.Session.end">
 <code class="descname">end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Session.end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Session.end" title="Permalink to this definition">¶</a></dt>
 <dd><p>End an active Session.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ebscopy.ebscopy.Session.get_page">
+<code class="descname">get_page</code><span class="sig-paren">(</span><em>page=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Session.get_page"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Session.get_page" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a page of results.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>page</strong> (<em>int</em>) &#8211; page to request</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Results object</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">class:<cite>ebscopy.Results</cite></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ebscopy.ebscopy.Session.next_page">
+<code class="descname">next_page</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Session.next_page"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Session.next_page" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the next page of results.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Results object</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">class:<cite>ebscopy.Results</cite></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ebscopy.ebscopy.Session.prev_page">
+<code class="descname">prev_page</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ebscopy/ebscopy.html#Session.prev_page"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ebscopy.ebscopy.Session.prev_page" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the previous page of results.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Results object</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">class:<cite>ebscopy.Results</cite></td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -305,11 +373,11 @@
         <li class="right" >
           <a href="index.html" title="Welcome to ebscopy’s documentation!"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">ebscopy 0.0.12 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">ebscopy 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2015, EBSCO Information Services.
+        &copy; Copyright 2016, EBSCO Information Services.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

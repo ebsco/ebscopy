@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>ebscopy.tests.ebscopy_test &mdash; ebscopy 0.0.12 documentation</title>
+    <title>ebscopy.tests.ebscopy_test &mdash; ebscopy 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.12',
+        VERSION:     '0.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="ebscopy 0.0.12 documentation" href="../../../index.html" />
+    <link rel="top" title="ebscopy 0.1.0 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
   </head>
   <body role="document">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">ebscopy 0.0.12 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">ebscopy 0.1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>  
@@ -142,19 +142,19 @@
 </div></div>
 <div class="viewcode-block" id="CreateConnectionFirst"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.CreateConnectionFirst">[docs]</a><span class="k">class</span> <span class="nc">CreateConnectionFirst</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
 <div class="viewcode-block" id="CreateConnectionFirst.test_sessions_via_connections"><a class="viewcode-back" href="../../../ebscopy.tests.html#ebscopy.tests.ebscopy_test.CreateConnectionFirst.test_sessions_via_connections">[docs]</a>	<span class="k">def</span> <span class="nf">test_sessions_via_connections</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ebscopy</span><span class="o">.</span><span class="n">POOL</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>								<span class="c"># Pool should start empty</span>
-		<span class="n">conn_a</span>								<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">POOL</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>			<span class="c"># Can I get a new implicit connection from the pool?</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ebscopy</span><span class="o">.</span><span class="n">POOL</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>										<span class="c"># Pool should start empty</span>
+		<span class="n">conn_a</span>								<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">POOL</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>					<span class="c"># Can I get a new implicit connection from the pool?</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">conn_a</span><span class="p">,</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">_Connection</span><span class="p">)</span>			
 		<span class="n">sess_1</span>								<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">(</span><span class="n">connection</span><span class="o">=</span><span class="n">conn_a</span><span class="p">)</span>	<span class="c"># Can I make a session with the object?</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">sess_1</span><span class="p">,</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">)</span>
 		<span class="n">info_1</span>								<span class="o">=</span> <span class="n">sess_1</span><span class="o">.</span><span class="n">info_data</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">info_1</span><span class="p">)</span>
 		<span class="n">sess_2</span>								<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">(</span><span class="n">connection</span><span class="o">=</span><span class="n">conn_a</span><span class="p">)</span>	<span class="c"># Can I make another session with the same object?</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span><span class="n">sess_1</span><span class="p">,</span> <span class="n">sess_2</span><span class="p">)</span>									<span class="c"># These sessions should be different</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span><span class="n">sess_1</span><span class="p">,</span> <span class="n">sess_2</span><span class="p">)</span>											<span class="c"># These sessions should be different</span>
 		<span class="n">conn_b</span>								<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">POOL</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">conn_b</span><span class="p">,</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">_Connection</span><span class="p">)</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ebscopy</span><span class="o">.</span><span class="n">POOL</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>								<span class="c"># Pool should only have the one _Connection</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">conn_a</span><span class="p">,</span> <span class="n">conn_b</span><span class="p">)</span>									<span class="c"># ConnectionPool should have given the existing _Connection</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ebscopy</span><span class="o">.</span><span class="n">POOL</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>										<span class="c"># Pool should only have the one _Connection</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">conn_a</span><span class="p">,</span> <span class="n">conn_b</span><span class="p">)</span>											<span class="c"># ConnectionPool should have given the existing _Connection</span>
 		<span class="n">sess_1</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
 		<span class="n">sess_2</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
 	<span class="c"># End of [test_sessions_via_connections] function</span>
@@ -165,22 +165,36 @@
 		<span class="n">sess</span>								<span class="o">=</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
 		<span class="n">res_yellow</span>							<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&quot;yellow&quot;</span><span class="p">)</span>
 
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">res_yellow</span><span class="p">,</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Results</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">res_yellow</span><span class="o">.</span><span class="n">stat_total_hits</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">res_yellow</span><span class="o">.</span><span class="n">stat_total_time</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">res_yellow</span><span class="o">.</span><span class="n">avail_facets_labels</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">res_yellow</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">sess</span><span class="o">.</span><span class="n">current_page</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
+		<span class="n">res_yellow_2</span>						<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">next_page</span><span class="p">()</span>						<span class="c"># Can I get the next page of results?</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">sess</span><span class="o">.</span><span class="n">current_page</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">sess</span><span class="o">.</span><span class="n">current_page</span><span class="p">,</span> <span class="n">res_yellow_2</span><span class="o">.</span><span class="n">page_number</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">res_yellow_2</span><span class="p">,</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Results</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">res_yellow_2</span><span class="o">.</span><span class="n">stat_total_hits</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span><span class="n">res_yellow</span><span class="p">,</span> <span class="n">res_yellow_2</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">res_yellow_2</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">)</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span><span class="n">res_yellow</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">res_yellow_2</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>			<span class="c"># Is the first item of the 1st page different than the first item of the 2nd page?</span>
+
+		<span class="n">res_yellow_4</span>						<span class="o">=</span> <span class="n">sess</span> <span class="o">+</span> <span class="mi">2</span>								<span class="c"># Use the addtion function</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">sess</span><span class="o">.</span><span class="n">current_page</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">res_yellow_4</span><span class="o">.</span><span class="n">page_number</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+		<span class="n">res_yellow_3</span>						<span class="o">=</span> <span class="n">sess</span> <span class="o">-</span> <span class="mi">1</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">sess</span><span class="o">.</span><span class="n">current_page</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">res_yellow_3</span><span class="o">.</span><span class="n">page_number</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 
 		<span class="n">res_yellow_blue</span>						<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&quot;yellow blue&quot;</span><span class="p">)</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">res_yellow</span><span class="p">,</span> <span class="n">res_yellow_blue</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">res_yellow</span><span class="p">,</span> <span class="n">res_yellow_blue</span><span class="p">)</span>								<span class="c"># Does a one term search have more hits than a two term search?</span>
 
-		<span class="n">rec</span>									<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">res_yellow</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-
+		<span class="n">rec</span>									<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">res_yellow</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>	<span class="c"># Can I retrieve a record from the results list?</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Record</span><span class="p">)</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">dbid</span><span class="p">,</span> <span class="p">(</span><span class="nb">unicode</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">an</span><span class="p">,</span> <span class="p">(</span><span class="nb">unicode</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">plink</span><span class="p">,</span> <span class="p">(</span><span class="nb">unicode</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">assertRegexpMatches</span><span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">plink</span><span class="p">,</span> <span class="s">&quot;^http://&quot;</span><span class="p">)</span>
 		
 		<span class="n">sess</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
 <span class="c"># End of [SearchTests] class</span>
@@ -194,6 +208,12 @@
 		<span class="n">rec_1_a</span>								<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 		<span class="n">rec_1_b</span>								<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 		<span class="n">rec_2</span>								<span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">record</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">rec_0</span><span class="p">,</span> <span class="n">ebscopy</span><span class="o">.</span><span class="n">Record</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">rec_0</span><span class="o">.</span><span class="n">dbid</span><span class="p">,</span> <span class="p">(</span><span class="nb">unicode</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">rec_0</span><span class="o">.</span><span class="n">an</span><span class="p">,</span> <span class="p">(</span><span class="nb">unicode</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertIsInstance</span><span class="p">(</span><span class="n">rec_0</span><span class="o">.</span><span class="n">plink</span><span class="p">,</span> <span class="p">(</span><span class="nb">unicode</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assertRegexpMatches</span><span class="p">(</span><span class="n">rec_0</span><span class="o">.</span><span class="n">plink</span><span class="p">,</span> <span class="s">&quot;^http://&quot;</span><span class="p">)</span>
 
 		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">rec_0</span><span class="p">,</span> <span class="n">rec_0</span><span class="p">)</span>									<span class="c"># Test identity</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">rec_1_a</span><span class="p">,</span> <span class="n">rec_1_b</span><span class="p">)</span>								<span class="c"># Test two equal objects</span>
@@ -251,12 +271,12 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">ebscopy 0.0.12 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">ebscopy 0.1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2015, EBSCO Information Services.
+        &copy; Copyright 2016, EBSCO Information Services.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
