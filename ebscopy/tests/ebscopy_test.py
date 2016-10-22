@@ -93,19 +93,19 @@ class CreateSessionsWithParameters(unittest.TestCase):
 
 class CreateConnectionFirst(unittest.TestCase):
 	def test_sessions_via_connections(self):
-		self.assertEqual(len(ebscopy.POOL), 0)								# Pool should start empty
-		conn_a								= ebscopy.POOL.get()			# Can I get a new implicit connection from the pool?
+		self.assertEqual(len(ebscopy.POOL), 0)										# Pool should start empty
+		conn_a								= ebscopy.POOL.get()					# Can I get a new implicit connection from the pool?
 		self.assertIsInstance(conn_a, ebscopy._Connection)			
 		sess_1								= ebscopy.Session(connection=conn_a)	# Can I make a session with the object?
 		self.assertIsInstance(sess_1, ebscopy.Session)
 		info_1								= sess_1.info_data
 		self.assertIsNotNone(info_1)
 		sess_2								= ebscopy.Session(connection=conn_a)	# Can I make another session with the same object?
-		self.assertNotEqual(sess_1, sess_2)									# These sessions should be different
+		self.assertNotEqual(sess_1, sess_2)											# These sessions should be different
 		conn_b								= ebscopy.POOL.get()
 		self.assertIsInstance(conn_b, ebscopy._Connection)
-		self.assertEqual(len(ebscopy.POOL), 1)								# Pool should only have the one _Connection
-		self.assertEqual(conn_a, conn_b)									# ConnectionPool should have given the existing _Connection
+		self.assertEqual(len(ebscopy.POOL), 1)										# Pool should only have the one _Connection
+		self.assertEqual(conn_a, conn_b)											# ConnectionPool should have given the existing _Connection
 		sess_1.end()
 		sess_2.end()
 	# End of [test_sessions_via_connections] function
@@ -116,22 +116,36 @@ class SearchTests(unittest.TestCase):
 		sess								= ebscopy.Session()
 		res_yellow							= sess.search("yellow")
 
+		self.assertIsInstance(res_yellow, ebscopy.Results)
 		self.assertGreater(res_yellow.stat_total_hits, 0)
 		self.assertGreater(res_yellow.stat_total_time, 0)
 		self.assertGreater(len(res_yellow.avail_facets_labels), 0)
 		self.assertIsInstance(res_yellow.record[0], tuple)
+		self.assertEqual(sess.current_page, 1)
 
+		res_yellow_2						= sess.next_page()						# Can I get the next page of results?
+		self.assertEqual(sess.current_page, 2)
+		self.assertEqual(sess.current_page, res_yellow_2.page_number)
+		self.assertIsInstance(res_yellow_2, ebscopy.Results)
+		self.assertGreater(res_yellow_2.stat_total_hits, 0)
+		self.assertNotEqual(res_yellow, res_yellow_2)
+		self.assertIsInstance(res_yellow_2.record[0], tuple)
+
+		self.assertNotEqual(res_yellow.record[0], res_yellow_2.record[0])			# Is the first item of the 1st page different than the first item of the 2nd page?
+
+		res_yellow_4						= sess + 2								# Use the addtion function
+		self.assertEqual(sess.current_page, 4)
+		self.assertEqual(res_yellow_4.page_number, 4)
+
+		res_yellow_3						= sess - 1
+		self.assertEqual(sess.current_page, 3)
+		self.assertEqual(res_yellow_3.page_number, 3)
 
 		res_yellow_blue						= sess.search("yellow blue")
-		self.assertGreater(res_yellow, res_yellow_blue)
+		self.assertGreater(res_yellow, res_yellow_blue)								# Does a one term search have more hits than a two term search?
 
-		rec									= sess.retrieve(res_yellow.record[0])
-
+		rec									= sess.retrieve(res_yellow.record[0])	# Can I retrieve a record from the results list?
 		self.assertIsInstance(rec, ebscopy.Record)
-		self.assertIsInstance(rec.dbid, (unicode, str))
-		self.assertIsInstance(rec.an, (unicode, str))
-		self.assertIsInstance(rec.plink, (unicode, str))
-		self.assertRegexpMatches(rec.plink, "^http://")
 		
 		sess.end()
 # End of [SearchTests] class
@@ -145,6 +159,12 @@ class RecordTests(unittest.TestCase):
 		rec_1_a								= sess.retrieve(res.record[1])
 		rec_1_b								= sess.retrieve(res.record[1])
 		rec_2								= sess.retrieve(res.record[2])
+
+		self.assertIsInstance(rec_0, ebscopy.Record)
+		self.assertIsInstance(rec_0.dbid, (unicode, str))
+		self.assertIsInstance(rec_0.an, (unicode, str))
+		self.assertIsInstance(rec_0.plink, (unicode, str))
+		self.assertRegexpMatches(rec_0.plink, "^http://")
 
 		self.assertEqual(rec_0, rec_0)									# Test identity
 		self.assertEqual(rec_1_a, rec_1_b)								# Test two equal objects

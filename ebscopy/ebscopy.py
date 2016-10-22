@@ -4,16 +4,18 @@
 #	be able to use IP
 #	close on destroy
 
-import json																	# Manage data
-import os																	# Get ENV variables with auth info
-from requests import HTTPError, post										# Does the heavy HTTP lifting
-from datetime import datetime, timedelta									# Monitor authentication timeout
-import logging																# Smart logging
-import re																	# Strip highlighting
 from pkg_resources import get_distribution
+import logging																# Smart logging
+import os																	# Get ENV variables with auth info
+import json																	# Manage data
+from requests import HTTPError, post										# Does the heavy HTTP lifting
+from lxml import html														# Strip HTML
+from datetime import date, datetime, timedelta								# Monitor authentication timeout
+import dateutil.parser														# Parse text to date
+import re																	# Strip highlighting
+#import warnings																# Allow warnings
 
-### Helper Functions
-
+### Utility Functions
 # TODO: this assumes only one highlight in string; what if more?
 def _parse_highlight(text):
 	"""
@@ -52,26 +54,42 @@ def _parse_highlight(text):
 # TODO: Use group instead of name?
 def _get_item_data(items, key, value):
 	"""
-	Return the ``Data`` component of a dict with the ``key`` of ''value'' from a list of dicts
+	Return the ``Data`` component of a dict with the ``key`` of ``value`` from a list of dicts
 
 	:param list items: a list of dicts, each of which contains keys, inlcuding ``Data``
 	:param string key: the key to search
 	:param string value: the value to search for
 	:rtype: string
 	"""
-	dt								= next((item for item in items if item.get(key) == value), None)
-	if dt:
-		return dt["Data"]
+	data									= next((item for item in items if item.get(key) == value), None)
+	if data:
+		return data["Data"]
 	else:
 		logging.warn("_get_item_data: No match for %s:%s in items!", key, value)
 		return None
 # End of [_get_item_data] function
 
 def _get_item_data_by_name(items, name):
+	"""
+	Check a list of dicts for a dict with a key, ``Name``, that has the value, ``name``, and get the value of the key, ``Data``
+
+	:param list items: a list of dicts, each of which contains keys, inlcuding ``Data``
+	:param string name: the value of the ``Name`` key to search
+	:rtype: string
+	"""
 	return _get_item_data(items, "Name", name)
+# End of [_get_item_data_by_name] function
 	
 def _get_item_data_by_group(items, group):
+	"""
+	Check a list of dicts for a dict with a key, ``Group``, that has the value, ``group``, and get the value of the key, ``Data``
+
+	:param list items: a list of dicts, each of which contains keys, inlcuding ``Data``
+	:param string group: the value of the ``Group`` key to search
+	:rtype: string
+	"""
 	return _get_item_data(items, "Group", group)
+# End of [_get_item_data_by_group] function
 
 def _use_or_get(kind, value=""):
 	"""
@@ -101,9 +119,38 @@ def _use_or_get(kind, value=""):
 	return value
 # End of [_use_or_get] function
 
+def _uniq(seq):
+	"""
+	Return a unique list of items
+	See: https://www.peterbe.com/plog/uniqifiers-benchmark
+
+	:param list seq: list of items to dedupe
+	:rtype: list
+	"""
+
+	seen = set()
+	return [x for x in seq if x not in seen and not seen.add(x)]
+# End of [_uniq] function
+
+def _parse_bib_date(dt):
+	"""
+	Return a date parsed from values in a dict
+
+	:param dict dt: dictionary with keys that represent a date
+	:rtype: class:`datetime.date`
+	"""
+	
+	if "Y" in dt and "M" in dt and "D" in dt:
+		return date(int(dt["Y"]), int(dt["M"]), int(dt["D"])) 
+	elif "Text" in dt:
+		try:
+			parsed			= dateutil.parser.parse(dt["Text"])
+			return date(parsed.year, parsed.month, parsed.day)
+		except ValueError:
+			return None
+# End of [_parse_bib_date] function
 
 ### Classes
-
 class Borg:
 	"""
 	All objects of class share same state.
@@ -150,14 +197,20 @@ class _Connection:
 		self.active							= False
 	# End of [__init__] function
 
+	def __repr__(self):
+		return self.__class__.__name__ + "(user_id=%r, password=%r, active=%r)" % (self.user_id, self.password, self.active)
+
 	def __str__(self):
-		return "|".join([str(int(self)), self.user_id, self.password, str(self.active)])
+		if self.active:
+			return "Active Connection using %s/%s" % (self.user_id, self.password)
+		else:
+			return "Inactive Connection"
 
 	def __int__(self):
 		return POOL.pool.index(self)
 
 	def __eq__(self, other):
-		if isinstance(other, Session):
+		if isinstance(other, _Connection):
 			return self.userpass == other.userpass
 		else:
 			return NotImplemented
@@ -321,6 +374,12 @@ class ConnectionPool(Borg):
 		Borg.__init__(self)													# Share state with another ConnectionPool
 		self.pool							= []							# The list of Connection objects
 
+	def __repr__(self):
+		return self.__class__.__name__ + "(pool=%r)" % (self.pool)
+
+	def __str__(self):
+		return "Connection Pool with %d Connections" % len(self)
+
 	def get(self, user_id="", password=""):
 		"""
 		Provide an existing or new connection based on credentials.
@@ -381,6 +440,8 @@ class Session:
 		:param string password: optional EDS password to use
 		"""
 		self.active							= False	
+		self.last_search					= {}
+		self.current_page					= 0
 
 		if connection:
 			self.connection					= connection
@@ -406,29 +467,34 @@ class Session:
 		self.info_data						= info_response
 	# End of [__init__] function
 
-	def _request(self, method, data):
-		"""
-		Use the _Connection.request function to make an API request.
-
-		Will attempt to heal itself if SessionToken is expired.
-
-		:param string method: API endpoint
-		:param dict data: Request data to POST
-		:returns: response from API
-		:rtype: dict
-		"""
-		if not self.active:
-			raise SessionError("This session is not active (probably explicitly closed)!")
-		try:
-			return self.connection.request(method, data, self.session_token)
-		except SessionError:
-			logging.warn("Session._request: Problem with Session, trying to start another!")
-			self.session_token				= self.connection._create_session(self.profile, self.org, self.guest)
-			return self.connection.request(method, data, self.session_token)
-	# End of [_request] function
+	def __repr__(self):
+		return self.__class__.__name__ + "(connection=%r, profile=%r, org=%r, guest=%r, active=%r)" % (self.connection, self.profile, self.org, self.guest, self.active)
+	# End of [__repr__] function
 
 	def __str__(self):
-		return "||".join([str(self.connection), "|".join([self.profile, self.org, self.guest, str(self.active)])])
+		if self.active:
+			return "Active Session to %s on %s" % (self.profile, self.connection)
+		else:
+			return "Inactive Session"
+	# End of [__str__] function
+
+	def __nonzero__(self):
+		"""
+		Determine boolean value based on self.active.
+
+		:rtype: boolean
+		"""
+		return self.active
+	# End of [__nonzero__] function
+
+	def __len__(self):
+		"""
+		Determine length value based on self.active.
+
+		:rtype: int
+		"""
+		return int(self.active)
+	# End of [__len__] function
 
 	def __eq__(self, other):
 		"""
@@ -455,11 +521,84 @@ class Session:
 			return result
 		else:
 			return not result
+	# End of [__ne__] function
+
+	def __add__(self, other):
+		"""
+		Get results for higher page number.
+
+		:returns: Results object
+		:rtype: class:`ebscopy.Results`
+		"""
+		if isinstance(other, int):
+			new_page					= self.current_page + other
+			return self.get_page(new_page)
+		else:
+			return NotImplemented
+	# End of [__add__] function
+
+	def __sub__(self, other):
+		"""
+		Get results for lower page number.
+
+		:returns: Results object
+		:rtype: class:`ebscopy.Results`
+		"""
+		if isinstance(other, int):
+			new_page					= max(1, self.current_page - other)
+			return self.get_page(new_page)
+		else:
+			return NotImplemented
+	# End of [__sub__] function
 
 # TODO: change to __exit__ for use as context thingie
 #	def __del__(self):
 #		if self.active:
 #			self.end()
+
+	def _request(self, method, data):
+		"""
+		Use the _Connection.request function to make an API request.
+
+		Will attempt to heal itself if SessionToken is expired.
+
+		:param string method: API endpoint
+		:param dict data: Request data to POST
+		:returns: response from API
+		:rtype: dict
+		"""
+		if not self.active:
+			raise SessionError("This session is not active (probably explicitly closed)!")
+		try:
+			return self.connection.request(method, data, self.session_token)
+		except SessionError:
+			logging.warn("Session._request: Problem with Session, trying to start another!")
+			self.session_token				= self.connection._create_session(self.profile, self.org, self.guest)
+			return self.connection.request(method, data, self.session_token)
+	# End of [_request] function
+
+	# Internal function for actually calling the API Search 
+	def _search(self, search_data={}):
+		"""
+		Internal search function for new and modified searches
+
+		:param dict search_data: dict of search POST data
+		:returns: Results object
+		:rtype: class:`ebscopy.Results`
+		"""
+		if not search_data:
+			raise ValueError("No search data in search_data!")
+		
+		results								= Results()
+		logging.debug("Session.search: Request data: %s", search_data)
+		search_response						= self._request("Search", search_data)
+		logging.debug("Session.search: Response: %s", search_response)
+		results.load(search_response)
+		self.last_search					= search_data
+		self.current_page					= search_response["SearchRequest"]["RetrievalCriteria"]["PageNumber"]
+		
+		return results
+	# End of [_search] function
 
 	# Do a search
 	def search(self, query, mode="all", sort="relevance", inc_facets="y", view="brief", rpp=20, page=1, highlight="y"):
@@ -494,20 +633,65 @@ class Session:
 													"PageNumber":			page,
 													"Highlight":			highlight
 																		},
-												"Actions":				None
+												"Actions":				[],
 												}
 
-		logging.debug("Session.search: Request data: %s", search_data)
-
-		search_response						= self._request("Search", search_data)
-
-		logging.debug("Session.search: Response: %s", search_response)
-
-		results								= Results()
-		results.load(search_response)
-
-		return results
+		return self._search(search_data)
 	# End of [search] function
+
+	# Add an action to a search
+	def add_action(self, action):
+		"""
+		Add an Action to an existing search.
+
+		:param string action: EDS API Action string
+		:returns: Results object
+		:rtype: class:`ebscopy.Results`
+		"""
+		search_data							= self.last_search
+		try:
+			search_data["Actions"].append(action)
+			return self._search(search_data)
+		except KeyError:
+			#warnings.warn("Unable to add Action! No previous search?", RuntimeWarning)
+			logging.warn("Session.add_action: Unable to add Action \"%s\"! No previous search?", action)
+			return Results()
+	# End of [add_action] function
+
+	def get_page(self, page=1):
+		"""
+		Get a page of results.
+
+		:param int page: page to request
+		:returns: Results object
+		:rtype: class:`ebscopy.Results`
+		"""
+		search_data							= self.last_search
+		return self.add_action("GoToPage(%d)" % page)
+	# End of [get_page] function
+
+	def next_page(self):
+		"""
+		Get the next page of results.
+
+		:returns: Results object
+		:rtype: class:`ebscopy.Results`
+		"""
+		page								= self.current_page + 1
+		return self.get_page(page)
+	# End of [next_page] function
+
+	# Get the previous page of results (not below 1)
+	def prev_page(self):
+		"""
+		Get the previous page of results.
+
+		:returns: Results object
+		:rtype: class:`ebscopy.Results`
+		"""
+		page								= max(1, self.current_page - 1)
+		return self.get_page(page)
+	# End of [prev_page] function
 
 	# Retrieve a record
 	def retrieve(self, dbid_an_tup, highlight=None, ebook="ebook-pdf"):
@@ -569,35 +753,47 @@ class Results:
 
 	# Initialize 
 	def __init__(self):
+		#self.query_string					= ""							# String straight from JSON
 		self.stat_total_hits				= 0
 		self.stat_total_time				= 0
 		self.stat_databases_raw				= []
 		self.avail_facets_raw				= []
 		self.avail_facets_labels			= []
 		self.avail_facets_ids				= []
-		self.records_simple					= []							# List of dicts w/ keys: PLink, DbID, An, Title, Author?
+		self.page_number					= 0
 		self.rec_format						= ""							# String straight from JSON
+		self.records_simple					= []							# List of dicts w/ keys: PLink, DbID, An, Title, Author, etc.
 		self.records_raw					= []							# List of raw Records straight from JSON
 		self.record							= []							# List of DbId/An tuples
 
 	## Internal helper functions
+	# Representation function
+	def __repr__(self):
+		return self.__class__.__name__ + "(queries=%r, hits=%r, page=%r)" % (self.search_queries, self.stat_total_hits, self.page_number)
+
+	# Stringify function
 	def __str__(self):
-		string								= ""
-		for dt in self.search_queries:
-			string							= string + dt.get("Term")
+		string								= "Page %d of Results for \"" % self.stat_total_hits
+		for q in self.search_queries:
+			string							+= q.get("Term")
+		string += "\""
 		return string
+	# End of [__str__] function
+
 	# Total number of hits, not hits in this page
 	def __len__(self):
 		return self.stat_total_hits
 	# End of [__len__] function
 
+	# Equality function
 	def __eq__(self, other):
 		if isinstance(other, Results):
-			return self.search_criteria == other.search_criteria and self.stat_total_hits == other.stat_total_hits
+			return self.search_criteria == other.search_criteria and self.stat_total_hits == other.stat_total_hits and self.page_number == other.page_number
 		else:
 			return NotImplemented
 	# End of [__eq__] function
 
+	# Not-Equal function
 	def __ne__(self, other):
 		result = self.__eq__(other)
 		if result is NotImplemented:
@@ -606,6 +802,7 @@ class Results:
 			return not result
 	# End of [__ne__] function
 	
+	# Less Than function
  	def __lt__(self, other):
 		if isinstance(other, Results):
 			return self.stat_total_hits < other.stat_total_hits
@@ -613,6 +810,7 @@ class Results:
 			return NotImplemented
 	# End of [__lt__] function
 
+	# Less Than or Equal function
  	def __le__(self, other):
 		if isinstance(other, Results):
 			return self.stat_total_hits <= other.stat_total_hits
@@ -620,6 +818,7 @@ class Results:
 			return NotImplemented
 	# End of [__le__] function
 
+	# Greater Than function
  	def __gt__(self, other):
 		if isinstance(other, Results):
 			return self.stat_total_hits > other.stat_total_hits
@@ -627,6 +826,7 @@ class Results:
 			return NotImplemented
 	# End of [__gt__] function
 
+	# Greater Than or Equal function
  	def __ge__(self, other):
 		if isinstance(other, Results):
 			return self.stat_total_hits >= other.stat_total_hits
@@ -647,6 +847,8 @@ class Results:
 
 		self.search_criteria				= data["SearchRequest"]["SearchCriteria"]
 		self.search_queries					= data["SearchRequest"]["SearchCriteria"]["Queries"]
+		self.page_number					= data["SearchRequest"]["RetrievalCriteria"]["PageNumber"]
+		self.rpp							= data["SearchRequest"]["RetrievalCriteria"]["ResultsPerPage"]
 
 		if self.stat_total_hits > 0:
 			self.avail_facets_raw			= data.get("SearchResult",{}).get("AvailableFacets",[])
@@ -657,18 +859,114 @@ class Results:
 			self.rec_format					= data["SearchResult"]["Data"]["RecordFormat"]
 			self.records_raw				= data["SearchResult"]["Data"]["Records"]
 			for record in data["SearchResult"]["Data"]["Records"]:
+				# Internal variables with default values
 				simple_rec					= {}
-				simple_rec["PLink"]			= record["PLink"]
+				has_source					= False
+				identifiers					= []
+				authors         			= []
+				isbns						= []
+				issns						= []
+				subjects					= []
+
+				# Start loading simple record data
+				simple_rec["ResultId"]		= record["ResultId"]
 				simple_rec["DbId"]			= record["Header"]["DbId"]
+				simple_rec["DbLabel"]		= record["Header"]["DbLabel"]
 				simple_rec["An"]			= record["Header"]["An"]
-				# TODO: are there other sources of titles?
-				simple_rec["Title"]			= record["RecordInfo"]["BibRecord"]["BibEntity"]["Titles"][0]["TitleFull"]
-				if record["FullText"]["Text"]["Availability"] > 0:
-					simple_rec["FTAvail"]	= True
+				simple_rec["Score"]			= record["Header"]["RelevancyScore"]
+				simple_rec["PubType"]		= record["Header"]["PubType"]
+				simple_rec["PubTypeId"]		= record["Header"]["PubTypeId"]
+				simple_rec["PLink"]			= record["PLink"]
+				simple_rec["FTAvail"]		= (False, True)[int(record["FullText"]["Text"]["Availability"])]
+				# Alternate method of setting FTAvail
+				#if record["FullText"]["Text"]["Availability"] > 0:
+				#	simple_rec["FTAvail"]	= True
+
+				# Troll through Items for good stuff
+				# Items often contain markup, so most things are better found elsewhere
+				# Abstracts are only found in Items (and only when detailed results are requested)
+				for item in record.get("Items", []):
+					if item["Group"] == "Src":
+						has_source			= True
+					elif item["Group"] == "Ab" and item["Label"] == "Abstract":
+						simple_rec["AbstractRaw"]	= item["Data"]
+						# Clean up the HTML in the abstract
+						simple_rec["Abstract"]        = html.fromstring(simple_rec["AbstractRaw"]).text_content()
+
+				# Collect any Identifiers from the main BibEntity
+				identifiers.extend(record["RecordInfo"]["BibRecord"]["BibEntity"].get("Identifiers", []))
+					
+				# Collect any Subjects
+				for subs in record["RecordInfo"]["BibRecord"]["BibEntity"].get("Subjects", []):
+					subjects.append(subs.get("SubjectFull", None))
+
+				# Get the main, unadorned Title
+				simple_rec["Title"]			= record["RecordInfo"]["BibRecord"]["BibEntity"]["Titles"][0].get("TitleFull")
+
+				# Collect any Authors
+				for contribs in record["RecordInfo"]["BibRecord"]["BibRelationships"].get("HasContributorRelationships", []):
+					if contribs["PersonEntity"]["Name"]["NameFull"]:
+						authors.append(contribs["PersonEntity"]["Name"]["NameFull"]) 
+
+
+				# According to the documentation: 
+				# "Currently, the IsPartOfRelationships element will contain only one IsPartOf element."
+				# http://edswiki.ebscohost.com/EBSCO_Discovery_Service_API_User_Guide_Appendix
+				bib_entity					= record["RecordInfo"]["BibRecord"]["BibRelationships"]["IsPartOfRelationships"][0]["BibEntity"]
+
+				if has_source:
+					for ttl in bib_entity.get("Titles", []):
+						if ttl["Type"] == "main":
+							simple_rec["Source"]	= ttl["TitleFull"]
+
+				# Collect any Date values, regardless of format
+				for dt in bib_entity.get("Dates", []):
+					if dt["Type"] == "published":
+						simple_rec["PubDate"]	= _parse_bib_date(dt)
+					elif dt["Type"] == "created": 
+						simple_rec["CreateDate"]= _parse_bib_date(dt)
+					else:
+						simple_rec["OtherDate"]	= _parse_bib_date(dt)
+				
+				# Set "Date" to the best Date value available
+				if simple_rec.get("PubDate"):
+					simple_rec["Date"]	= simple_rec["PubDate"]
+				elif simple_rec.get("CreateDate"):
+					simple_rec["Date"]	= simple_rec["CreateDate"]
+				elif simple_rec.get("OtherDate"):
+					simple_rec["Date"]	= simple_rec["OtherDate"]
+
+				# Collect any Identifiers from the IsPartOf BibEntity
+				identifiers.extend(bib_entity.get("Identifiers", []))
+
+				for ident in identifiers:
+					if ident["Type"] == "doi":
+						simple_rec["Doi"]	= ident["Value"]
+					elif ident["Type"].startswith("isbn"):
+						isbns.append(ident["Value"])
+					elif ident["Type"].startswith("issn"):
+						issns.append(ident["Value"])
+
+				# Assign previously collected collections
+				subjects					= _uniq(subjects)
+				simple_rec["Subjects"]		= subjects
+				simple_rec["Subject"]		= "; ".join(subjects)
+
+				authors						= _uniq(authors)
+				simple_rec["Authors"]		= authors
+				simple_rec["Author"]		= "; ".join(authors)
+
+				issns						= _uniq(issns)
+				simple_rec["Issns"]			= issns
+				simple_rec["Issn"]			= "; ".join(issns)
+
+				isbns						= _uniq(isbns)
+				simple_rec["Isbns"]			= isbns
+				simple_rec["Isbn"]			= "; ".join(isbns)
 
 				self.records_simple.append(simple_rec)
 				self.record.append((record["Header"]["DbId"], record["Header"]["An"])) 
-
+			# End of for loop of records
 		return
 	# End of load function
 
@@ -677,14 +975,23 @@ class Results:
 		Print the list of results in a not displeasing manner.
 		"""
 		print "Search Results"
-		print "---------------"
+		print "--------------------"
+		print repr(self)
+		print "--------------------"
 		for record in self.records_simple:
-			print("Title: %s" % record["Title"])
-			print("PLink: %s" % record["PLink"])
-			print("DbId: %s" % record["DbId"])
-			print("An: %s" % record["An"])
+			print("DbId: %s" % record.get("DbId"))
+			print("An: %s" % record.get("An"))
+			print("Title: %s" % record.get("Title"))
+			print("Author: %s" % record.get("Author"))
+			print("PLink: %s" % record.get("PLink"))
+			print("Subject: %s" % record.get("Subject"))
+			print("DOI: %s" % record.get("Doi"))
+			print("Isbn: %s" % record.get("Isbn"))
+			print("Issn: %s" % record.get("Issn"))
+			print("Abstract: %s" % record.get("Abstract"))
+			print "----------"
 			print
-		print "---------------"
+		print "--------------------"
 		return
 # End of Results class
 
@@ -703,8 +1010,11 @@ class Record:
 		self.simple_title					= ""
 		self.simple_author					= ""
 
+	def __repr__(self):
+		return self.__class__.__name__ + "(dbid=%r, an=%r)" % (self.dbid, self.an)
+
 	def __str__(self):
-		return "|".join([self.dbid, self.an, self.simple_title, self.simple_author])
+		return "Record for %s by %s)" % (self.simple_title, self.simple_author)
 
 	def __eq__(self, other):
 		if isinstance(other, Record):
@@ -743,11 +1053,11 @@ class Record:
 		"""
 		Print the list of results in a not displeasing manner.
 		"""
+		print("DbId: %s"	% self.dbid)
+		print("An: %s"		% self.an)
 		print("Title: %s"	% self.simple_title)
 		print("Author: %s"	% self.simple_author)
 		print("PLink: %s"	% self.plink)
-		print("DbId: %s"	% self.dbid)
-		print("An: %s"		% self.an)
 		print
 		return
 # End of Record class
