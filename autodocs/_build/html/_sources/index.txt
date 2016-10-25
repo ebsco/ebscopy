@@ -1,5 +1,5 @@
 .. ebscopy documentation master file, created by
-   sphinx-quickstart on Tue Jul 14 19:05:22 2015.
+   sphinx-quickstart on Tue Oct 25 00:07:52 2016.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
@@ -11,7 +11,6 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   ebscopy
 
 
 Indices and tables
