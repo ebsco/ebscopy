@@ -14,7 +14,6 @@ Contents:
 .. autosummary::
    :toctree: _autosummary
 
-   ebscopy
 
 Indices and tables
 ==================
