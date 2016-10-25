@@ -440,7 +440,8 @@ class Session:
 		:param string password: optional EDS password to use
 		"""
 		self.active							= False	
-		self.last_search					= {}
+		self.next_search					= {}
+		self.next_search					= {}
 		self.current_page					= 0
 
 		if connection:
@@ -595,7 +596,9 @@ class Session:
 		logging.debug("Session.search: Response: %s", search_response)
 		results.load(search_response)
 		self.last_search					= search_data
-		self.current_page					= search_response["SearchRequest"]["RetrievalCriteria"]["PageNumber"]
+		self.next_search					= search_data
+		self.next_search["SearchCriteria"]["FacetFilters"]	= search_response["SearchRequest"]["SearchCriteria"].get("FacetFilters", [])
+		self.current_page					= int(search_response["SearchRequest"]["RetrievalCriteria"]["PageNumber"])
 		
 		return results
 	# End of [_search] function
@@ -639,24 +642,23 @@ class Session:
 		return self._search(search_data)
 	# End of [search] function
 
-	# Add an action to a search
-	def add_action(self, action):
+	def add_actions(self, actions):
 		"""
-		Add an Action to an existing search.
+		Add an Action or Actions to an existing search.
 
-		:param string action: EDS API Action string
+		:param list action: List of EDS API Action(s)
 		:returns: Results object
 		:rtype: class:`ebscopy.Results`
 		"""
-		search_data							= self.last_search
-		try:
-			search_data["Actions"].append(action)
+		if self.next_search:
+			search_data						= self.next_search
+			search_data["Actions"]			= actions
+			print actions
 			return self._search(search_data)
-		except KeyError:
-			#warnings.warn("Unable to add Action! No previous search?", RuntimeWarning)
-			logging.warn("Session.add_action: Unable to add Action \"%s\"! No previous search?", action)
+		else:
+			logging.warn("Session.add_actions: No previous search found when setting action(s): \"%s\"!", actions)
 			return Results()
-	# End of [add_action] function
+	# End of [add_actions] function
 
 	def get_page(self, page=1):
 		"""
@@ -666,8 +668,7 @@ class Session:
 		:returns: Results object
 		:rtype: class:`ebscopy.Results`
 		"""
-		search_data							= self.last_search
-		return self.add_action("GoToPage(%d)" % page)
+		return self.add_actions(["GoToPage(%d)" % page])
 	# End of [get_page] function
 
 	def next_page(self):
@@ -754,12 +755,17 @@ class Results:
 	# Initialize 
 	def __init__(self):
 		#self.query_string					= ""							# String straight from JSON
+	
+		self.search_queries					= []
 		self.stat_total_hits				= 0
 		self.stat_total_time				= 0
 		self.stat_databases_raw				= []
 		self.avail_facets_raw				= []
 		self.avail_facets_labels			= []
 		self.avail_facets_ids				= []
+		self.avail_facets_by_id				= {}
+		self.actions_addable				= []
+		self.actions_removable				= []
 		self.page_number					= 0
 		self.rec_format						= ""							# String straight from JSON
 		self.records_simple					= []							# List of dicts w/ keys: PLink, DbID, An, Title, Author, etc.
@@ -773,7 +779,7 @@ class Results:
 
 	# Stringify function
 	def __str__(self):
-		string								= "Page %d of Results for \"" % self.stat_total_hits
+		string								= "Page %d of Results for \"" % self.page_number
 		for q in self.search_queries:
 			string							+= q.get("Term")
 		string += "\""
@@ -850,11 +856,22 @@ class Results:
 		self.page_number					= data["SearchRequest"]["RetrievalCriteria"]["PageNumber"]
 		self.rpp							= data["SearchRequest"]["RetrievalCriteria"]["ResultsPerPage"]
 
+		for qwa in data["SearchRequest"]["SearchCriteriaWithActions"].get("QueriesWithAction", []):
+			self.actions_removable.append( qwa["RemoveAction"] )
+
+		for ffwa in data["SearchRequest"]["SearchCriteriaWithActions"].get("FacetFiltersWithAction", []):
+			self.actions_removable.append( ffwa["RemoveAction"] )
+			for fvwa in ffwa["FacetValuesWithAction"]:
+				self.actions_removable.append( fvwa["RemoveAction"] )
+
 		if self.stat_total_hits > 0:
 			self.avail_facets_raw			= data.get("SearchResult",{}).get("AvailableFacets",[])
 			for facet in self.avail_facets_raw:
 				self.avail_facets_labels.append(facet["Label"])
 				self.avail_facets_ids.append(facet["Id"])
+				self.avail_facets_by_id[facet["Id"]]	= facet["AvailableFacetValues"]
+				for value in facet["AvailableFacetValues"]:
+					self.actions_addable.append(value["AddAction"])
 	
 			self.rec_format					= data["SearchResult"]["Data"]["RecordFormat"]
 			self.records_raw				= data["SearchResult"]["Data"]["Records"]
