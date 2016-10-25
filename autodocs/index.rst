@@ -11,7 +11,10 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+.. autosummary::
+   :toctree: _autosummary
 
+   ebscopy
 
 Indices and tables
 ==================

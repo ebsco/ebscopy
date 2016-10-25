@@ -1,0 +1,383 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ebscopy package &#8212; ebscopy 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="ebscopy 0.1.0 documentation" href="../index.html" />
+    <link rel="next" title="ebscopy.tests package" href="ebscopy.tests.html" />
+    <link rel="prev" title="Welcome to ebscopy’s documentation!" href="../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="ebscopy.tests.html" title="ebscopy.tests package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Welcome to ebscopy’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ebscopy 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ebscopy-package">
+<h1>ebscopy package<a class="headerlink" href="#ebscopy-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ebscopy.tests.html">ebscopy.tests package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ebscopy.tests.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ebscopy.tests.html#ebscopy-tests-ebscopy-test-module">ebscopy.tests.ebscopy_test module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ebscopy.tests.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="ebscopy-ebscopy-module">
+<h2>ebscopy.ebscopy module<a class="headerlink" href="#ebscopy-ebscopy-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-ebscopy">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ebscopy" title="Permalink to this headline">¶</a></h2>
+<dl class="exception">
+<dt id="ebscopy.AuthenticationError">
+<em class="property">exception </em><code class="descclassname">ebscopy.</code><code class="descname">AuthenticationError</code><a class="headerlink" href="#ebscopy.AuthenticationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></p>
+<p>An error authenticating against the API.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="ebscopy.Borg">
+<em class="property">class </em><code class="descclassname">ebscopy.</code><code class="descname">Borg</code><a class="headerlink" href="#ebscopy.Borg" title="Permalink to this definition">¶</a></dt>
+<dd><p>All objects of class share same state.</p>
+<p>Extended by ConnectionPool. Based on Alex Martelli&#8217;s code:
+<a class="reference external" href="http://www.aleax.it/5ep.html">http://www.aleax.it/5ep.html</a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="ebscopy.ConnectionPool">
+<em class="property">class </em><code class="descclassname">ebscopy.</code><code class="descname">ConnectionPool</code><a class="headerlink" href="#ebscopy.ConnectionPool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ebscopy.Borg" title="ebscopy.Borg"><code class="xref py py-class docutils literal"><span class="pre">ebscopy.Borg</span></code></a></p>
+<p>Container for _Connection objects.</p>
+<dl class="method">
+<dt id="ebscopy.ConnectionPool.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>user_id=''</em>, <em>password=''</em><span class="sig-paren">)</span><a class="headerlink" href="#ebscopy.ConnectionPool.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provide an existing or new connection based on credentials.</p>
+<p>If the credentials match an existing connection, return it; otherwise, return a new one.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>user_id</strong> (<em>string</em>) &#8211; API user_id</li>
+<li><strong>password</strong> (<em>string</em>) &#8211; API password</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">_Connection object</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">class:<cite>ebscopy._Connection</cite></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ebscopy.Record">
+<em class="property">class </em><code class="descclassname">ebscopy.</code><code class="descname">Record</code><a class="headerlink" href="#ebscopy.Record" title="Permalink to this definition">¶</a></dt>
+<dd><p>Single Record object returned by Retrieve request</p>
+<dl class="method">
+<dt id="ebscopy.Record.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#ebscopy.Record.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load and process the response from an API Retrieve request.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>dict</em>) &#8211; Dict containing the API response from a Retrieve request</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ebscopy.Record.pprint">
+<code class="descname">pprint</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ebscopy.Record.pprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print the list of results in a not displeasing manner.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ebscopy.Results">
+<em class="property">class </em><code class="descclassname">ebscopy.</code><code class="descname">Results</code><a class="headerlink" href="#ebscopy.Results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Results object returned by an API Search request.</p>
+<dl class="method">
+<dt id="ebscopy.Results.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#ebscopy.Results.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load and process the response from an API Search request.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>dict</em>) &#8211; Dict containing the API response from a Search request</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ebscopy.Results.pprint">
+<code class="descname">pprint</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ebscopy.Results.pprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print the list of results in a not displeasing manner.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ebscopy.Session">
+<em class="property">class </em><code class="descclassname">ebscopy.</code><code class="descname">Session</code><span class="sig-paren">(</span><em>connection=None</em>, <em>profile=''</em>, <em>org=''</em>, <em>guest=''</em>, <em>user_id=''</em>, <em>password=''</em><span class="sig-paren">)</span><a class="headerlink" href="#ebscopy.Session" title="Permalink to this definition">¶</a></dt>
+<dd><p>A single user&#8217;s API session object.</p>
+<dl class="method">
+<dt id="ebscopy.Session.add_action">
+<code class="descname">add_action</code><span class="sig-paren">(</span><em>action</em><span class="sig-paren">)</span><a class="headerlink" href="#ebscopy.Session.add_action" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an Action to an existing search.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>action</strong> (<em>string</em>) &#8211; EDS API Action string</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Results object</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">class:<cite>ebscopy.Results</cite></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ebscopy.Session.end">
+<code class="descname">end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ebscopy.Session.end" title="Permalink to this definition">¶</a></dt>
+<dd><p>End an active Session.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ebscopy.Session.get_page">
+<code class="descname">get_page</code><span class="sig-paren">(</span><em>page=1</em><span class="sig-paren">)</span><a class="headerlink" href="#ebscopy.Session.get_page" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a page of results.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>page</strong> (<em>int</em>) &#8211; page to request</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Results object</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">class:<cite>ebscopy.Results</cite></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ebscopy.Session.next_page">
+<code class="descname">next_page</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ebscopy.Session.next_page" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the next page of results.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Results object</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">class:<cite>ebscopy.Results</cite></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ebscopy.Session.prev_page">
+<code class="descname">prev_page</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ebscopy.Session.prev_page" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the previous page of results.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Results object</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">class:<cite>ebscopy.Results</cite></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ebscopy.Session.retrieve">
+<code class="descname">retrieve</code><span class="sig-paren">(</span><em>dbid_an_tup</em>, <em>highlight=None</em>, <em>ebook='ebook-pdf'</em><span class="sig-paren">)</span><a class="headerlink" href="#ebscopy.Session.retrieve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a single record by DbId and An values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dbid_an_tup</strong> (<em>tuple</em>) &#8211; DbId and An to make</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Record object</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">class:<cite>ebscopy.Record</cite></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ebscopy.Session.search">
+<code class="descname">search</code><span class="sig-paren">(</span><em>query</em>, <em>mode='all'</em>, <em>sort='relevance'</em>, <em>inc_facets='y'</em>, <em>view='brief'</em>, <em>rpp=20</em>, <em>page=1</em>, <em>highlight='y'</em><span class="sig-paren">)</span><a class="headerlink" href="#ebscopy.Session.search" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a search with the EDS API.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mode</strong> (<em>string</em>) &#8211; SearchMode, (all* | any | bool | smart)</li>
+<li><strong>sort</strong> (<em>string</em>) &#8211; sort mode, determined by API configuration</li>
+<li><strong>inc_facets</strong> (<em>string</em>) &#8211; IncludeFacets, (y* | n)</li>
+<li><strong>view</strong> (<em>string</em>) &#8211; level of record detail (brief* | title | detailed)</li>
+<li><strong>rpp</strong> (<em>int</em>) &#8211; results per page (20)</li>
+<li><strong>page</strong> (<em>int</em>) &#8211; page number to return (1)</li>
+<li><strong>highlight</strong> (<em>string</em>) &#8211; wrap search terms in &lt;highlight&gt; tags (y* | n)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Results object</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">class:<cite>ebscopy.Results</cite></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="ebscopy.SessionError">
+<em class="property">exception </em><code class="descclassname">ebscopy.</code><code class="descname">SessionError</code><a class="headerlink" href="#ebscopy.SessionError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></p>
+<p>An error creating a Session with the API.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">ebscopy package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#ebscopy-ebscopy-module">ebscopy.ebscopy module</a></li>
+<li><a class="reference internal" href="#module-ebscopy">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../index.html"
+                        title="previous chapter">Welcome to ebscopy&#8217;s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="ebscopy.tests.html"
+                        title="next chapter">ebscopy.tests package</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/_autosummary/ebscopy.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="ebscopy.tests.html" title="ebscopy.tests package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Welcome to ebscopy’s documentation!"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ebscopy 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, EBSCO Information Services.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.
+    </div>
+  </body>
+</html>
