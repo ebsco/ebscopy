@@ -440,7 +440,7 @@ class Session:
 		:param string password: optional EDS password to use
 		"""
 		self.active							= False	
-		self.next_search					= {}
+		self.last_search					= {}
 		self.next_search					= {}
 		self.current_page					= 0
 
@@ -598,23 +598,24 @@ class Session:
 		self.last_search					= search_data
 		self.next_search					= search_data
 		self.next_search["SearchCriteria"]["FacetFilters"]	= search_response["SearchRequest"]["SearchCriteria"].get("FacetFilters", [])
-		self.current_page					= int(search_response["SearchRequest"]["RetrievalCriteria"]["PageNumber"])
+		self.next_search["SearchCriteria"]["Limiters"]		= search_response["SearchRequest"]["SearchCriteria"].get("Limiters", [])
+		self.current_page					= int(search_response["SearchRequest"]["RetrievalCriteria"].get("PageNumber", 1))
 		
 		return results
 	# End of [_search] function
 
 	# Do a search
-	def search(self, query, mode="all", sort="relevance", inc_facets="y", view="brief", rpp=20, page=1, highlight="y"):
+	def search(self, query, mode="all", sort="relevance", view="brief", rpp=20, page=1, highlight="y", suggest="n"):
 		"""
 		Perform a search with the EDS API.
 
 		:param string mode: SearchMode, (all* | any | bool | smart) 
 		:param string sort: sort mode, determined by API configuration
-		:param string inc_facets: IncludeFacets, (y* | n)
 		:param string view: level of record detail (brief* | title | detailed)
 		:param int rpp: results per page (20)
 		:param int page: page number to return (1)
 		:param string highlight: wrap search terms in <highlight> tags (y* | n)
+		:param string suggest: return search suggestions (y* | n)
 		:returns: Results object
 		:rtype: class:`ebscopy.Results`
 		"""
@@ -627,7 +628,8 @@ class Session:
 																				}
 																			],
 													"SearchMode":			mode,
-													"IncludeFacets":		inc_facets,
+													"IncludeFacets":		"y",
+													"AutoSuggest":			suggest,
 													"Sort": 				sort
 																		},
 												"RetrievalCriteria":	{
@@ -694,6 +696,18 @@ class Session:
 		return self.get_page(page)
 	# End of [prev_page] function
 
+	def auto_suggest(self, term=""):
+		"""
+		Request just automatic suggestions.
+
+		:returns: list of suggestions
+		:rtype: list
+		"""
+		
+		results								= self.search(term, rpp=1, highlight="n", suggest="y")
+		return results.auto_suggestions
+	# End of [auto_suggest] function
+
 	# Retrieve a record
 	def retrieve(self, dbid_an_tup, highlight=None, ebook="ebook-pdf"):
 		"""
@@ -759,6 +773,8 @@ class Results:
 		self.search_queries					= []
 		self.stat_total_hits				= 0
 		self.stat_total_time				= 0
+		self.page_number					= 0
+		self.rec_format						= ""							# String straight from JSON
 		self.stat_databases_raw				= []
 		self.avail_facets_raw				= []
 		self.avail_facets_labels			= []
@@ -766,8 +782,7 @@ class Results:
 		self.avail_facets_by_id				= {}
 		self.actions_addable				= []
 		self.actions_removable				= []
-		self.page_number					= 0
-		self.rec_format						= ""							# String straight from JSON
+		self.auto_suggestions				= []							# List of automatic suggestions
 		self.records_simple					= []							# List of dicts w/ keys: PLink, DbID, An, Title, Author, etc.
 		self.records_raw					= []							# List of raw Records straight from JSON
 		self.record							= []							# List of DbId/An tuples
@@ -849,11 +864,12 @@ class Results:
 		"""
 		self.stat_total_hits				= data["SearchResult"]["Statistics"]["TotalHits"]
 		self.stat_total_time				= data["SearchResult"]["Statistics"]["TotalSearchTime"]
+		self.auto_suggestions				= data["SearchResult"].get("AutoSuggestedTerms", [])
 		self.stat_databases_raw				= data["SearchResult"]["Statistics"]["Databases"]
 
 		self.search_criteria				= data["SearchRequest"]["SearchCriteria"]
 		self.search_queries					= data["SearchRequest"]["SearchCriteria"]["Queries"]
-		self.page_number					= data["SearchRequest"]["RetrievalCriteria"]["PageNumber"]
+		self.page_number					= data["SearchRequest"]["RetrievalCriteria"].get("PageNumber", 1)
 		self.rpp							= data["SearchRequest"]["RetrievalCriteria"]["ResultsPerPage"]
 
 		for qwa in data["SearchRequest"]["SearchCriteriaWithActions"].get("QueriesWithAction", []):
@@ -864,6 +880,11 @@ class Results:
 			for fvwa in ffwa["FacetValuesWithAction"]:
 				self.actions_removable.append( fvwa["RemoveAction"] )
 
+		for lwa in data["SearchRequest"]["SearchCriteriaWithActions"].get("LimitersWithAction", []):
+			self.actions_removable.append( lwa["RemoveAction"] )
+			for lvwa in lwa["LimiterValueWithAction"]:
+				self.actions_removable.append( lvwa["RemoveAction"] )
+
 		if self.stat_total_hits > 0:
 			self.avail_facets_raw			= data.get("SearchResult",{}).get("AvailableFacets",[])
 			for facet in self.avail_facets_raw:
@@ -872,6 +893,8 @@ class Results:
 				self.avail_facets_by_id[facet["Id"]]	= facet["AvailableFacetValues"]
 				for value in facet["AvailableFacetValues"]:
 					self.actions_addable.append(value["AddAction"])
+
+			#TODO: add available criteria. here? or outside the if hits>0?
 	
 			self.rec_format					= data["SearchResult"]["Data"]["RecordFormat"]
 			self.records_raw				= data["SearchResult"]["Data"]["Records"]
