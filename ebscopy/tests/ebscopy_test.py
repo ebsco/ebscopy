@@ -123,24 +123,6 @@ class SearchTests(unittest.TestCase):
 		self.assertIsInstance(res_yellow.record[0], tuple)
 		self.assertEqual(sess.current_page, 1)
 
-		res_yellow_2						= sess.next_page()						# Can I get the next page of results?
-		self.assertEqual(sess.current_page, 2)
-		self.assertEqual(sess.current_page, res_yellow_2.page_number)
-		self.assertIsInstance(res_yellow_2, ebscopy.Results)
-		self.assertGreater(res_yellow_2.stat_total_hits, 0)
-		self.assertNotEqual(res_yellow, res_yellow_2)
-		self.assertIsInstance(res_yellow_2.record[0], tuple)
-
-		self.assertNotEqual(res_yellow.record[0], res_yellow_2.record[0])			# Is the first item of the 1st page different than the first item of the 2nd page?
-
-		res_yellow_4						= sess + 2								# Use the addtion function
-		self.assertEqual(sess.current_page, 4)
-		self.assertEqual(res_yellow_4.page_number, 4)
-
-		res_yellow_3						= sess - 1
-		self.assertEqual(sess.current_page, 3)
-		self.assertEqual(res_yellow_3.page_number, 3)
-
 		res_yellow_blue						= sess.search("yellow blue")
 		self.assertGreater(res_yellow, res_yellow_blue)								# Does a one term search have more hits than a two term search?
 
@@ -149,6 +131,73 @@ class SearchTests(unittest.TestCase):
 		
 		sess.end()
 # End of [SearchTests] class
+
+class PageTests(unittest.TestCase):
+	def test_basic_page_movement(self):
+		sess								= ebscopy.Session()
+		res_1								= sess.search("red yellow orange green indigo violet", rpp=5)
+		res_2								= sess.next_page()						# Get the next page of results
+
+		self.assertEqual(sess.current_page, 2)										# Is the session on the next page?
+		self.assertEqual(res_2.page_number, 2)										# Are the results on the next page?
+		self.assertEqual(sess.current_page, res_2.page_number)						# Does the session page match the latest results page? (Technically, this must be true, due to the transitive property of the last two tests)
+		self.assertIsInstance(res_2, ebscopy.Results)								# Is the second page a Results object?
+		self.assertGreater(res_2.stat_total_hits, 0)								# Are there still more than 0 hits?
+		self.assertNotEqual(res_1, res_2)											# Are the two pages different?
+		self.assertNotEqual(res_1.record[0], res_2.record[0])						# Is the first item of the 1st page different than the first item of the 2nd page?
+		
+		res_4								= sess + 2								# Does addition work?
+		self.assertEqual(sess.current_page, 4)										# Is the session on the right page?
+		self.assertEqual(res_4.page_number, 4)										# Are the results on the right page?
+
+		res_3								= sess - 1								# Does subtraction work?
+		self.assertEqual(sess.current_page, 3)										# Is the session on the right page?
+		self.assertEqual(res_3.page_number, 3)										# Are the results on the right page?
+
+		sess.end()
+
+	def test_bad_page_movement(self):
+		sess								= ebscopy.Session()
+
+		res_blue							= sess.search("blue", rpp=100)
+		res_bad								= sess + 5
+
+		self.assertFalse(res_bad)													# Does skipping too many pages give an empty result set?
+
+		res_roygbiv							= []
+		res_roygbiv.append(sess.search("red yellow orange green indigo violet", rpp=10))
+		
+		# Collect results until we get the same page twice
+		for page in range(1,10):
+			res								= sess.next_page()
+			res_roygbiv.append(res)
+			if not res:
+				break
+			
+		self.assertTrue(res_roygbiv[0])
+		self.assertTrue(res_roygbiv[1])
+		self.assertFalse(res_roygbiv[-1])											# Is the last result page empty?
+		
+#
+#		with self.assertRaises(RetrievalError):
+#			res_roygbiv						= sess.search("red yellow orange green indigo violet", rpp=1)
+#			while True:
+#				sess + 1
+		
+		sess.end()
+
+	def test_long_page_movement(self):
+		sess								= ebscopy.Session()
+
+		res									= sess.search("green", rpp=100)
+
+		for page in range(1, 50):
+			res								= sess + 1
+
+		self.assertTrue(res)
+		self.assertEqual(sess.current_page, res.page_number)						# Does the session page match the latest results page?
+		self.assertEqual(res.page_number, 50)
+
 
 class RecordTests(unittest.TestCase):
 	def test_record_equality(self):

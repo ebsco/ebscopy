@@ -174,6 +174,12 @@ class SessionError(Exception):
 	"""
 	pass
 
+class RetrievalError(Exception):
+	"""
+	An error retrieving informatino from the API.
+	"""
+	pass
+
 class _Connection:
 	"""
 	A single connection to the API, shared by 1+ Sessions.
@@ -234,7 +240,7 @@ class _Connection:
 			raise ValueError("Unknown API method requested!")
 
 		data_json							= json.dumps(data)
-		logging.debug("_Connection.request: JSON data being sent: %s", data_json)
+		logging.info("_Connection.request: JSON data being sent: %s", data_json)
 		base_host							= "https://eds-api.ebscohost.com"
 		base_path							= ""
 		base_url							= ""
@@ -250,7 +256,7 @@ class _Connection:
 			base_path						= "/edsapi/rest/"
 
 		full_url							= base_host + base_path + method
-		logging.debug("_Connection.request: Full URL: %s", full_url)
+		logging.info("_Connection.request: Full URL: %s", full_url)
 
 		headers								= {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
@@ -273,32 +279,44 @@ class _Connection:
 		try:
 			r.raise_for_status()
 		except:
-			logging.debug("_Connection.request: Request attempt: %s", attempt)
-			logging.debug("_Connection.request: Method: %s", method)
-			logging.debug("_Connection.request: Code: %s", r.status_code)
-			logging.debug("_Connection.request: Request response object: %s", r)
-			logging.debug("_Connection.request: Error text: %s", r.text)
+			logging.error("_Connection.request: Request attempt: %s", attempt)
+			logging.error("_Connection.request: Method: %s", method)
+			logging.error("_Connection.request: Code: %s", r.status_code)
+			logging.error("_Connection.request: Request response object: %s", r)
+			logging.error("_Connection.request: Error text: %s", r.text)
+			logging.error("_Connection.request: JSON Object: %s", r.json())
 
 			if r.json().get("ErrorNumber"):
-				if r.json().get("ErrorNumber") in ("104", "107"):							# Authentication Token Invalid or Missing
+				# ErrorNumbers come in as strings
+				error_num						= r.json()["ErrorNumber"]
+				logging.error("_Connection.request: ErrorNumber: %s", error_num )
+
+				if error_num in ("104", "107"):										# Authentication Token Invalid or Missing
 					logging.warn("_Connection.request: Bad AuthToken, trying to get another.")
 					self.active					= False
 					self.connect()
 					logging.warn("_Connection.request: Rerunning original request.")
 					return self.request(method, data, session_token, attempt)
-				elif r.json().get("ErrorNumber") in ("108", "109"):							# Session Token Missing or Invalid
+				elif error_num in ("108", "109"):									# Session Token Missing or Invalid
 					raise SessionError("Bad Session!")
-				elif r.json().get("ErrorNumber") in ("144"):								# Account/Profile mismatch
+				elif error_num == "144":											# Account/Profile mismatch
 					raise ValueError("Account/Profile mismatch!")
+				elif error_num == "138":											# Max Record Retrieval Exceeded
+					raise RetrievalError("Max Record Retrieval Exceeded!")
 				else:
-					raise HTTPError("Unexpected ErrorNumber from server!")
+					raise HTTPError("Unexpected ErrorNumber from server (%s)!" % error_num)
+
 			elif r.json().get("ErrorCode"):
-				if r.json().get("ErrorCode") == 1102:										# ErrorCode is an integer, not a string
+				# ErrorCodes come in as integers
+				error_code						= r.json()["ErrorCode"]
+				logging.error("_Connection.request: ErrorCode: %s", error_code )
+
+				if error_code == 1102:												# Invalid Credentials
 					raise AuthenticationError("Invalid credentials!")
-				elif r.json().get("ErrorCode") == 1103:										# ErrorCode is an integer, not a string
+				elif error_code == 1103:											# No Profile
 					raise AuthenticationError("No valid profiles found for customer/group combination.")
 				else:
-					raise HTTPError("Unexpected ErrorCode from server!")
+					raise HTTPError("Unexpected ErrorCode from server (%s)!" % error_code)
 			else:
 				raise HTTPError("Completely unexpected error from server!")
 	
@@ -552,7 +570,6 @@ class Session:
 			return NotImplemented
 	# End of [__sub__] function
 
-# TODO: change to __exit__ for use as context thingie
 #	def __del__(self):
 #		if self.active:
 #			self.end()
@@ -570,8 +587,12 @@ class Session:
 		"""
 		if not self.active:
 			raise SessionError("This session is not active (probably explicitly closed)!")
+
 		try:
 			return self.connection.request(method, data, self.session_token)
+		#except RetrievalError:
+			#logging.error("Session._request: Whoa, error with retrieving results!")
+			#return
 		except SessionError:
 			logging.warn("Session._request: Problem with Session, trying to start another!")
 			self.session_token				= self.connection._create_session(self.profile, self.org, self.guest)
@@ -579,7 +600,7 @@ class Session:
 	# End of [_request] function
 
 	# Internal function for actually calling the API Search 
-	def _search(self, search_data={}):
+	def _search(self, search_data={}, expect_page=None):
 		"""
 		Internal search function for new and modified searches
 
@@ -591,15 +612,26 @@ class Session:
 			raise ValueError("No search data in search_data!")
 		
 		results								= Results()
-		logging.debug("Session.search: Request data: %s", search_data)
-		search_response						= self._request("Search", search_data)
+		logging.info("Session.search: Request data: %s", search_data)
+
+		try:
+			search_response						= self._request("Search", search_data)
+		except RetrievalError as e:
+			logging.warn("Session._search: Unable to retrieve results; Results object will be empty! Error: %s", e)
+			return results
+
 		logging.debug("Session.search: Response: %s", search_response)
-		results.load(search_response)
+
 		self.last_search					= search_data
 		self.next_search					= search_data
-		self.next_search["SearchCriteria"]["FacetFilters"]	= search_response["SearchRequest"]["SearchCriteria"].get("FacetFilters", [])
-		self.next_search["SearchCriteria"]["Limiters"]		= search_response["SearchRequest"]["SearchCriteria"].get("Limiters", [])
+		self.next_search["SearchCriteria"]["FacetFilters"]	= search_response["SearchRequest"]["SearchCriteria"].get("FacetFilters", None)
+		self.next_search["SearchCriteria"]["Limiters"]		= search_response["SearchRequest"]["SearchCriteria"].get("Limiters", None)
 		self.current_page					= int(search_response["SearchRequest"]["RetrievalCriteria"].get("PageNumber", 1))
+		
+		if not expect_page or expect_page == self.current_page:
+			results.load(search_response)
+		else:
+			logging.warn("Session._search: Expected page %s but got page %s; Results object will be empty!" % (expect_page, self.current_page))
 		
 		return results
 	# End of [_search] function
@@ -644,8 +676,10 @@ class Session:
 		return self._search(search_data)
 	# End of [search] function
 
-	def add_actions(self, actions):
+	def add_actions(self, actions, expect_page=None):
 		"""
+		Add an Action or Actions to an existing search.
+
 		Add an Action or Actions to an existing search.
 
 		:param list action: List of EDS API Action(s)
@@ -655,8 +689,7 @@ class Session:
 		if self.next_search:
 			search_data						= self.next_search
 			search_data["Actions"]			= actions
-			print actions
-			return self._search(search_data)
+			return self._search(search_data, expect_page=expect_page)
 		else:
 			logging.warn("Session.add_actions: No previous search found when setting action(s): \"%s\"!", actions)
 			return Results()
@@ -670,7 +703,7 @@ class Session:
 		:returns: Results object
 		:rtype: class:`ebscopy.Results`
 		"""
-		return self.add_actions(["GoToPage(%d)" % page])
+		return self.add_actions(["GoToPage(%d)" % page], expect_page=page)
 	# End of [get_page] function
 
 	def next_page(self):
@@ -724,7 +757,7 @@ class Session:
 					"EbookPreferredFormat": ebook
 				}
 
-		logging.debug("Session.retrieve: Request data: %s", retrieve_data)
+		logging.info("Session.retrieve: Request data: %s", retrieve_data)
 
 		retrieve_response					= self._request("Retrieve", retrieve_data)
 
@@ -801,8 +834,30 @@ class Results:
 		return string
 	# End of [__str__] function
 
-	# Total number of hits, not hits in this page
+	def __bool__(self):
+		"""
+		Determine boolean value based on number of hits (Python 3).
+
+		:rtype: boolean
+		"""
+		return bool(self.stat_total_hits)
+	# End of [__bool__] function
+
+	def __nonzero__(self):
+		"""
+		Determine boolean value based on number of hits (Python 2).
+
+		:rtype: boolean
+		"""
+		return self.__bool__()
+	# End of [__nonzero__] function
+
 	def __len__(self):
+		"""
+		Determine length value based on number of hits.
+
+		:rtype: int
+		"""
 		return self.stat_total_hits
 	# End of [__len__] function
 
@@ -810,6 +865,8 @@ class Results:
 	def __eq__(self, other):
 		if isinstance(other, Results):
 			return self.search_criteria == other.search_criteria and self.stat_total_hits == other.stat_total_hits and self.page_number == other.page_number
+		elif isinstance(other, int):
+			return self.stat_total_hits == other
 		else:
 			return NotImplemented
 	# End of [__eq__] function
@@ -827,6 +884,8 @@ class Results:
  	def __lt__(self, other):
 		if isinstance(other, Results):
 			return self.stat_total_hits < other.stat_total_hits
+		elif isinstance(other, int):
+			return self.stat_total_hits < other
 		else:
 			return NotImplemented
 	# End of [__lt__] function
@@ -835,6 +894,8 @@ class Results:
  	def __le__(self, other):
 		if isinstance(other, Results):
 			return self.stat_total_hits <= other.stat_total_hits
+		elif isinstance(other, int):
+			return self.stat_total_hits <= other
 		else:
 			return NotImplemented
 	# End of [__le__] function
@@ -843,6 +904,8 @@ class Results:
  	def __gt__(self, other):
 		if isinstance(other, Results):
 			return self.stat_total_hits > other.stat_total_hits
+		elif isinstance(other, int):
+			return self.stat_total_hits > other
 		else:
 			return NotImplemented
 	# End of [__gt__] function
@@ -851,6 +914,8 @@ class Results:
  	def __ge__(self, other):
 		if isinstance(other, Results):
 			return self.stat_total_hits >= other.stat_total_hits
+		elif isinstance(other, int):
+			return self.stat_total_hits >= other
 		else:
 			return NotImplemented
 	# End of [__ge__] function
@@ -1049,12 +1114,15 @@ class Record:
 		self.fulltext_avail					= False
 		self.simple_title					= ""
 		self.simple_author					= ""
+	# End of [__init__] function
 
 	def __repr__(self):
 		return self.__class__.__name__ + "(dbid=%r, an=%r)" % (self.dbid, self.an)
+	# End of [__repr__] function
 
 	def __str__(self):
 		return "Record for %s by %s)" % (self.simple_title, self.simple_author)
+	# End of [__str__] function
 
 	def __eq__(self, other):
 		if isinstance(other, Record):
@@ -1069,6 +1137,7 @@ class Record:
 			return result
 		else:
 			return not result
+	# End of [__ne__] function
 
 	def load(self, data):
 		"""
@@ -1088,6 +1157,7 @@ class Record:
 		self.simple_author					= _get_item_data_by_group(data["Record"]["Items"], "Au")
 		self.simple_subject					= _get_item_data_by_group(data["Record"]["Items"], "Su")
 		return
+	# End of [load] function
 
 	def pprint(self):
 		"""
@@ -1100,6 +1170,7 @@ class Record:
 		print("PLink: %s"	% self.plink)
 		print
 		return
+	# End of [print] function
 # End of Record class
 
 _version = get_distribution('ebscopy').version
