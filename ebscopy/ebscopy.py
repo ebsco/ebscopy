@@ -624,8 +624,12 @@ class Session:
 
 		self.last_search					= search_data
 		self.next_search					= search_data
-		self.next_search["SearchCriteria"]["FacetFilters"]	= search_response["SearchRequest"]["SearchCriteria"].get("FacetFilters", None)
-		self.next_search["SearchCriteria"]["Limiters"]		= search_response["SearchRequest"]["SearchCriteria"].get("Limiters", None)
+
+		if search_response["SearchRequest"]["SearchCriteria"].get("FacetFilters"):
+			self.next_search["SearchCriteria"]["FacetFilters"]	= search_response["SearchRequest"]["SearchCriteria"]["FacetFilters"]
+		if search_response["SearchRequest"]["SearchCriteria"].get("Limiters"):
+			self.next_search["SearchCriteria"]["Limiters"]		= search_response["SearchRequest"]["SearchCriteria"]["Limiters"]
+
 		self.current_page					= int(search_response["SearchRequest"]["RetrievalCriteria"].get("PageNumber", 1))
 		
 		if not expect_page or expect_page == self.current_page:
@@ -676,10 +680,20 @@ class Session:
 		return self._search(search_data)
 	# End of [search] function
 
+	def add_action(self, action, expect_page=None):
+		"""
+		Add an Action to an existing search.
+
+		:param list action: List of EDS API Action(s)
+		:returns: Results object
+		:rtype: class:`ebscopy.Results`
+		"""
+
+		return self.add_actions([action], expect_page)
+	# End of [add_action] function
+
 	def add_actions(self, actions, expect_page=None):
 		"""
-		Add an Action or Actions to an existing search.
-
 		Add an Action or Actions to an existing search.
 
 		:param list action: List of EDS API Action(s)

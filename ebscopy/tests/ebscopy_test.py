@@ -186,17 +186,36 @@ class PageTests(unittest.TestCase):
 		
 		sess.end()
 
-	def test_long_page_movement(self):
+	def test_basic_long_page_movement(self):
 		sess								= ebscopy.Session()
 
-		res									= sess.search("green", rpp=100)
-
-		for page in range(1, 50):
-			res								= sess + 1
+		for page in range(0, 50):
+			if page == 0:
+				res							= sess.search("green", rpp=100, view="detailed", highlight="n")
+			else:
+				res							= sess.next_page()
 
 		self.assertTrue(res)
 		self.assertEqual(sess.current_page, res.page_number)						# Does the session page match the latest results page?
-		self.assertEqual(res.page_number, 50)
+		self.assertEqual(res.page_number, 50)										# Does the results page number match the loop count?
+
+		sess.end()
+
+	def test_facet_long_page_movement(self):
+		sess								= ebscopy.Session()
+
+		for page in range(0, 50):
+			if page == 0:
+				res							= sess.search("green", rpp=100, view="detailed", highlight="n")
+				res							= sess.add_action("addfacetfilter(SourceType:Academic Journals)")
+			else:
+				res							= sess.next_page()
+
+		self.assertTrue(res)
+		self.assertEqual(sess.current_page, res.page_number)						# Does the session page match the latest results page?
+		self.assertEqual(res.page_number, 50)										# Does the results page number match the loop count?
+
+		sess.end()
 
 
 class RecordTests(unittest.TestCase):

@@ -5,4 +5,5 @@ v0.0.6, 2015-07-09 -- Actually working with pip
 v0.1.0, 2016-10-21 -- Major updates, including pagination and much more robust records_simple
 v0.1.2, 2016-10-26 -- Fixed pagination and adding actions seems to work
 v0.1.3, 2016-10-27 -- Last page logic working
+v0.1.4, 2016-10-28 -- Don't send Facets and Limiters in JSON if they aren't needed
 
