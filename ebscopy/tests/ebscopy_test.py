@@ -112,7 +112,7 @@ class CreateConnectionFirst(unittest.TestCase):
 # End of [CreateConnectionFirst] class
 
 class SearchTests(unittest.TestCase):
-	def test_search_results(self):
+	def test_basic_search_results(self):
 		sess								= ebscopy.Session()
 		res_yellow							= sess.search("yellow")
 
@@ -130,6 +130,27 @@ class SearchTests(unittest.TestCase):
 		self.assertIsInstance(rec, ebscopy.Record)
 		
 		sess.end()
+	# End of [test_basic_search_results] function
+
+	def test_limiter_search_results(self):
+		sess								= ebscopy.Session()
+		res									= sess.search("volcano", limiters=["FT:Y", "RV:Y"])
+
+		self.assertTrue(res)
+
+		sess.end()
+	
+	def test_expander_search_results(self):
+		sess								= ebscopy.Session()
+		res									= sess.search("earthquake", expanders=["fakeexpander:Y", "fulltext:Y"])
+
+		self.assertTrue(res)
+
+		sess.end()
+	
+
+
+
 # End of [SearchTests] class
 
 class PageTests(unittest.TestCase):
@@ -156,7 +177,7 @@ class PageTests(unittest.TestCase):
 
 		sess.end()
 
-	def test_bad_page_movement(self):
+	def test_too_many_page_movement(self):
 		sess								= ebscopy.Session()
 
 		res_blue							= sess.search("blue", rpp=100)
@@ -178,12 +199,6 @@ class PageTests(unittest.TestCase):
 		self.assertTrue(res_roygbiv[1])
 		self.assertFalse(res_roygbiv[-1])											# Is the last result page empty?
 		
-#
-#		with self.assertRaises(RetrievalError):
-#			res_roygbiv						= sess.search("red yellow orange green indigo violet", rpp=1)
-#			while True:
-#				sess + 1
-		
 		sess.end()
 
 	def test_basic_long_page_movement(self):
@@ -195,12 +210,16 @@ class PageTests(unittest.TestCase):
 			else:
 				res							= sess.next_page()
 
+			if not res:
+				break
+
 		self.assertTrue(res)
 		self.assertEqual(sess.current_page, res.page_number)						# Does the session page match the latest results page?
 		self.assertEqual(res.page_number, 50)										# Does the results page number match the loop count?
 
 		sess.end()
 
+	@unittest.skip("This is currently broken by a bug in the API")
 	def test_facet_long_page_movement(self):
 		sess								= ebscopy.Session()
 
@@ -210,6 +229,9 @@ class PageTests(unittest.TestCase):
 				res							= sess.add_action("addfacetfilter(SourceType:Academic Journals)")
 			else:
 				res							= sess.next_page()
+
+			if not res:
+				break
 
 		self.assertTrue(res)
 		self.assertEqual(sess.current_page, res.page_number)						# Does the session page match the latest results page?
@@ -242,7 +264,7 @@ class RecordTests(unittest.TestCase):
 # End of [RecordTests] class
 
 class TimeoutTests(unittest.TestCase):
-	@unittest.skip("takes too long")
+	@unittest.skip("The timeout test takes too long.")
 	def test_auth_timeout(self):
 		conn							= ebscopy.POOL.get()
 		sess							= ebscopy.Session(connection=conn)

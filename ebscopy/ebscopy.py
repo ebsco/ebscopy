@@ -620,7 +620,7 @@ class Session:
 			logging.warn("Session._search: Unable to retrieve results; Results object will be empty! Error: %s", e)
 			return results
 
-		logging.debug("Session.search: Response: %s", search_response)
+		#logging.debug("Session.search: Response: %s", search_response)
 
 		self.last_search					= search_data
 		self.next_search					= search_data
@@ -631,6 +631,7 @@ class Session:
 			self.next_search["SearchCriteria"]["Limiters"]		= search_response["SearchRequest"]["SearchCriteria"]["Limiters"]
 
 		self.current_page					= int(search_response["SearchRequest"]["RetrievalCriteria"].get("PageNumber", 1))
+		self.next_search["RetrievalCriteria"]["PageNumber"]		= self.current_page
 		
 		if not expect_page or expect_page == self.current_page:
 			results.load(search_response)
@@ -641,7 +642,7 @@ class Session:
 	# End of [_search] function
 
 	# Do a search
-	def search(self, query, mode="all", sort="relevance", view="brief", rpp=20, page=1, highlight="y", suggest="n"):
+	def search(self, query, mode="all", sort="relevance", view="brief", rpp=20, page=1, highlight="y", suggest="n", expanders=[], limiters=[]):
 		"""
 		Perform a search with the EDS API.
 
@@ -652,9 +653,40 @@ class Session:
 		:param int page: page number to return (1)
 		:param string highlight: wrap search terms in <highlight> tags (y* | n)
 		:param string suggest: return search suggestions (y* | n)
+		:param list expanders: expanders to apply; each list item can be in the form "fulltext:Y" (string) or "fulltext" (string)
+		:param list limiters: limiters to apply; each list item can be in the form "LA99:English" (string), ["LA99", "English"] (list), or {"Id": "LA99", "Values": ["English", "Spanish"]} (dict)
 		:returns: Results object
 		:rtype: class:`ebscopy.Results`
 		"""
+
+		valid_expanders						= frozenset(["thesaurus", "fulltext", "relatedsubjects"])
+		expanders_to_check					= []
+		for expander in expanders:
+			expander						= expander.replace("enhancedsubjectprecision", "relatedsubjects")
+			if ":Y" in expander:
+				expanders_to_check.append(expander.split(":")[0])
+			else:
+				expanders_to_check.append(expander)
+		expanders_to_use					= list(valid_expanders.intersection(expanders_to_check))
+
+		limiters_to_use						= []
+		for limiter in limiters:
+			entry							= {"Id": "", "Values": [""]}
+			append							= True
+
+			if isinstance(limiter, str):
+				entry["Id"], entry["Values"][0]	= limiter.split(":")
+			elif isinstance(limiter, list):
+				entry["Id"]					= limiter[0]
+				entry["Values"][0]			= limiter[1]
+			elif isinstance(limiter, dict) and isinstance(limiter.get("Id"), str) and isinstance(limiter.get("Values"), list):
+				entry						= limiter
+			else:
+				append						= False
+
+			if append:
+				limiters_to_use.append(entry)
+
 
 		search_data							=	{
 												"SearchCriteria": 		{
@@ -670,12 +702,18 @@ class Session:
 																		},
 												"RetrievalCriteria":	{
 													"View":					view,
-													"ResultsPerPage":		rpp,
+													"ResultsPerPage":		max(1, min(rpp, 100)),
 													"PageNumber":			page,
 													"Highlight":			highlight
 																		},
 												"Actions":				[],
 												}
+
+		if expanders_to_use:
+			search_data["SearchCriteria"]["Expanders"]	= expanders_to_use
+
+		if limiters_to_use:
+			search_data["SearchCriteria"]["Limiters"]	= limiters_to_use
 
 		return self._search(search_data)
 	# End of [search] function
@@ -961,7 +999,7 @@ class Results:
 
 		for lwa in data["SearchRequest"]["SearchCriteriaWithActions"].get("LimitersWithAction", []):
 			self.actions_removable.append( lwa["RemoveAction"] )
-			for lvwa in lwa["LimiterValueWithAction"]:
+			for lvwa in lwa["LimiterValuesWithAction"]:
 				self.actions_removable.append( lvwa["RemoveAction"] )
 
 		if self.stat_total_hits > 0:
