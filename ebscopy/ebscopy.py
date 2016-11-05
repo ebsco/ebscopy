@@ -140,14 +140,14 @@ def _parse_bib_date(dt):
 	:rtype: class:`datetime.date`
 	"""
 	
-	if "Y" in dt and "M" in dt and "D" in dt:
-		return date(int(dt["Y"]), int(dt["M"]), int(dt["D"])) 
-	elif "Text" in dt:
-		try:
+	try:																		# Lots of stuff can go wrong with date parsing
+		if "Y" in dt and "M" in dt and "D" in dt:
+			return date(int(dt["Y"]), int(dt["M"]), int(dt["D"])) 
+		elif "Text" in dt:
 			parsed			= dateutil.parser.parse(dt["Text"])
 			return date(parsed.year, parsed.month, parsed.day)
-		except ValueError:
-			return None
+	except ValueError:
+		return None
 # End of [_parse_bib_date] function
 
 ### Classes
@@ -620,7 +620,7 @@ class Session:
 			logging.warn("Session._search: Unable to retrieve results; Results object will be empty! Error: %s", e)
 			return results
 
-		#logging.debug("Session.search: Response: %s", search_response)
+		logging.debug("Session.search: Response: %s", search_response)
 
 		self.last_search					= search_data
 		self.next_search					= search_data

@@ -15,7 +15,7 @@ log_levels									= {
 if os.environ.get('EDS_LOG_LEVEL') in log_levels.keys():
 	log_level								= log_levels[os.environ.get('EDS_LOG_LEVEL')]
 else:
-	log_level								= logging.NOTSET
+	log_level								= logging.WARNING
 
 logging.basicConfig(
 	filename='/tmp/ebscopy-%s.log' % (os.getpid()),
