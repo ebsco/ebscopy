@@ -1028,11 +1028,11 @@ class Results:
 				# Start loading simple record data
 				simple_rec["ResultId"]		= record["ResultId"]
 				simple_rec["DbId"]			= record["Header"]["DbId"]
-				simple_rec["DbLabel"]		= record["Header"]["DbLabel"]
+				simple_rec["DbLabel"]		= record["Header"].get("DbLabel", None)
 				simple_rec["An"]			= record["Header"]["An"]
-				simple_rec["Score"]			= record["Header"]["RelevancyScore"]
-				simple_rec["PubType"]		= record["Header"]["PubType"]
-				simple_rec["PubTypeId"]		= record["Header"]["PubTypeId"]
+				simple_rec["Score"]			= record["Header"].get("RelevancyScore", None)
+				simple_rec["PubType"]		= record["Header"].get("PubType", None)
+				simple_rec["PubTypeId"]		= record["Header"].get("PubTypeId", None)
 				simple_rec["PLink"]			= record["PLink"]
 				simple_rec["FTAvail"]		= (False, True)[int(record["FullText"]["Text"]["Availability"])]
 				# Alternate method of setting FTAvail
@@ -1061,7 +1061,7 @@ class Results:
 				simple_rec["Title"]			= record["RecordInfo"]["BibRecord"]["BibEntity"]["Titles"][0].get("TitleFull")
 
 				# Collect any Authors
-				for contribs in record["RecordInfo"]["BibRecord"]["BibRelationships"].get("HasContributorRelationships", []):
+				for contribs in record["RecordInfo"]["BibRecord"].get("BibRelationships", {}).get("HasContributorRelationships", []):
 					if contribs["PersonEntity"]["Name"]["NameFull"]:
 						authors.append(contribs["PersonEntity"]["Name"]["NameFull"]) 
 
@@ -1069,7 +1069,7 @@ class Results:
 				# According to the documentation: 
 				# "Currently, the IsPartOfRelationships element will contain only one IsPartOf element."
 				# http://edswiki.ebscohost.com/EBSCO_Discovery_Service_API_User_Guide_Appendix
-				bib_entity					= record["RecordInfo"]["BibRecord"]["BibRelationships"]["IsPartOfRelationships"][0]["BibEntity"]
+				bib_entity					= record["RecordInfo"]["BibRecord"].get("BibRelationships", {}).get("IsPartOfRelationships", [{}])[0].get("BibEntity", {})
 
 				if has_source:
 					for ttl in bib_entity.get("Titles", []):

@@ -8,4 +8,5 @@ v0.1.3, 2016-10-27 -- Last page logic working
 v0.1.4, 2016-10-28 -- Don't send Facets and Limiters in JSON if they aren't needed
 v0.1.5, 2016-10-31 -- Now supports Expanders and Limiters in new searches
 v0.1.6, 2016-11-04 -- Bunches of little fixes
+v0.1.7, 2016-11-11 -- Doesn't assume that BibRelationships or RelevancyScore elements exist
 
