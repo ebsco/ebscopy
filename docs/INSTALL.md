@@ -91,7 +91,7 @@ export EDS_LOG_LEVEL=INFO
 ```shell
 (py279)$ python          
 ```
-```python
+```pycon
 Python 2.7.9 (default, Apr  1 2015, 18:18:03) 
 [GCC 4.8.2 20140120 (Red Hat 4.8.2-16)] on linux2
 Type "help", "copyright", "credits" or "license" for more information.
