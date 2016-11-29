@@ -150,6 +150,33 @@ def _parse_bib_date(dt):
 		return None
 # End of [_parse_bib_date] function
 
+def _change_eds_date_limiter_to_api(l):
+	"""
+	Fixes the DT1 limiter syntax from EDS/EBSCOhost
+
+	:param dict l: dictionary with containing limiter in the form {"Id": "DT1", "Values": ["19780515-20171231"]}
+	:rtype: dict
+	"""
+
+	if l["Id"] != "DT1" or not re.match("\d{8}-\d{8}", l["Values"][0]):
+		return l
+
+	(start_str, end_str)					= l["Values"][0].split("-")
+	# Don't need to use the parse method when incoming format is almost guaranteed to be known...?
+	#start_date								= dateutil.parser.parse(start_str)
+	#end_date								= dateutil.parser.parse(end_str)
+	start_date								= datetime.strptime(start_str, "%Y%m%d")
+	end_date								= datetime.strptime(end_str, "%Y%m%d")
+
+	logging.info("_change_eds_date_limiter_to_api: DT1 Limiter Was: %s", l["Values"][0])
+
+	l["Values"][0]							= start_date.strftime("%Y-%m") + "/" + end_date.strftime("%Y-%m")
+
+	logging.info("_change_eds_date_limiter_to_api: DT1 Limiter Now: %s", l["Values"][0])
+
+	return l
+# End of [_change_eds_date_limiter_to_api] function
+
 ### Classes
 class Borg:
 	"""
@@ -685,6 +712,8 @@ class Session:
 				append						= False
 
 			if append:
+				if entry["Id"] == "DT1":
+					entry					= _change_eds_date_limiter_to_api(entry)
 				limiters_to_use.append(entry)
 
 
