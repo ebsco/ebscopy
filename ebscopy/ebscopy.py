@@ -158,15 +158,15 @@ def _change_eds_date_limiter_to_api(l):
 	:rtype: dict
 	"""
 
-	if l["Id"] != "DT1" or not re.match("\d{8}-\d{8}", l["Values"][0]):
+	if l["Id"] != "DT1" or not re.search("\d{8}-\d{8}", l["Values"][0]):
 		return l
 
 	(start_str, end_str)					= l["Values"][0].split("-")
 	# Don't need to use the parse method when incoming format is almost guaranteed to be known...?
 	#start_date								= dateutil.parser.parse(start_str)
 	#end_date								= dateutil.parser.parse(end_str)
-	start_date								= datetime.strptime(start_str, "%Y%m%d")
-	end_date								= datetime.strptime(end_str, "%Y%m%d")
+	start_date								= datetime.strptime(start_str.strip(), "%Y%m%d")
+	end_date								= datetime.strptime(end_str.strip(), "%Y%m%d")
 
 	logging.info("_change_eds_date_limiter_to_api: DT1 Limiter Was: %s", l["Values"][0])
 
@@ -712,6 +712,7 @@ class Session:
 				append						= False
 
 			if append:
+				# Try to fix DT1 format in case it's coming from EDS
 				if entry["Id"] == "DT1":
 					entry					= _change_eds_date_limiter_to_api(entry)
 				limiters_to_use.append(entry)
