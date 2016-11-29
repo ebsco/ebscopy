@@ -146,8 +146,10 @@ class SearchTests(unittest.TestCase):
 		sess								= ebscopy.Session()
 		res_api_date						= sess.search("volcano", limiters=["DT1:2014-01/2014-12"])
 		res_eds_date						= sess.search("volcano", limiters=["DT1:20140101-20141231"])
-
 		self.assertEqual(int(round(len(res_api_date) - len(res_eds_date), -1)), 0)	# Are the two result sets within 8 results of each other?
+
+		res_eds_date_space					= sess.search("magma", limiters=["DT1: 20140101-20141231"])
+		self.assertTrue(res_eds_date_space)
 
 		sess.end()
 	
