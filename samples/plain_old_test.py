@@ -2,42 +2,44 @@
 
 from ebscopy import *
 
-connection = POOL.get()
-session = Session(connection)
+session = Session()
 results = session.search("blue")
-print "---------------"
-print "Search Results"
-print "---------------"
+
 results.pprint()
-print "---------------"
+
+print 
 print "Total Hits:"
+print "---------------"
 print results.stat_total_hits
-print "---------------"
+print 
 print "Available Facets:"
-print results.avail_facets_labels
 print "---------------"
+print results.avail_facets_labels
 print 
 
 record = session.retrieve(results.record[0])
-print "---------------"
+
+print
 print "Simple Call for Record Info"
 print "---------------"
 record.pprint()
-print "---------------"
+print
 
-record = session.retrieve((results.simple_records[0]['DbId'], results.simple_records[0]['An']), highlight=["blue"])
-print "---------------"
+record = session.retrieve((results.records_simple[0]['DbId'], results.records_simple[0]['An']), highlight=["blue"])
+
+print 
 print "Record Info with Highlight"
 print "---------------"
 record.pprint()
-print "---------------"
+print
 
-record = session.retrieve((results.simple_records[0]['DbId'], results.simple_records[0]['An']))
-print "---------------"
+record = session.retrieve((results.records_simple[0]['DbId'], results.records_simple[0]['An']))
+
+print
 print "Record Info without Highlight"
 print "---------------"
 record.pprint()
-print "---------------"
+print
 
 session.end()
 

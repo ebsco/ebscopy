@@ -144,12 +144,34 @@ class SearchTests(unittest.TestCase):
 
 	def test_dt1_limiter(self):
 		sess								= ebscopy.Session()
-		res_api_date						= sess.search("volcano", limiters=["DT1:2014-01/2014-12"])
-		res_eds_date						= sess.search("volcano", limiters=["DT1:20140101-20141231"])
+		res_api_date						= sess.search("volcano", limiters=["DT1:2014-01/2014-12"])		# This is the form that API requires
+		res_eds_date						= sess.search("volcano", limiters=["DT1:20140101-20141231"])	# This is the form that the EDS interface generates
+
 		self.assertEqual(int(round(len(res_api_date) - len(res_eds_date), -1)), 0)	# Are the two result sets within 8 results of each other?
 
-		res_eds_date_space					= sess.search("magma", limiters=["DT1: 20140101-20141231"])
+		res_eds_date_space					= sess.search("volcano", limiters=["DT1: 20140101-20141231"])	# A common form from EDS contains a space
 		self.assertTrue(res_eds_date_space)
+		self.assertEqual(res_eds_date, res_eds_date_space)
+
+		res_api_date_space					= sess.search("volcano", limiters=["DT1: 2014-01/2014-12"])		# The space should be acceptable
+		self.assertTrue(res_api_date_space)
+		self.assertEqual(res_api_date, res_api_date_space)
+		
+
+		res_feb_31							= sess.search("magma", limiters=["DT1:19000101-19930231"])		# The EDS interface considers the 31st to be the last day of every month
+		self.assertTrue(res_feb_31)
+
+		
+		# Date ranges can be open-ended
+		res_only_start						= sess.search("magma", limiters=["DT1:19930131-"])
+		res_only_start_space				= sess.search("magma", limiters=["DT1: 19930131-"])
+		res_only_end						= sess.search("magma", limiters=["DT1:-19930131"])
+		res_only_end_space					= sess.search("magma", limiters=["DT1: -19930131"])
+
+		self.assertTrue(res_only_start)
+		self.assertTrue(res_only_start_space)
+		self.assertTrue(res_only_end)
+		self.assertTrue(res_only_end_space)
 
 		sess.end()
 	
