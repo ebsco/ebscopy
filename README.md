@@ -17,7 +17,7 @@ session.end()
 ```
 
 * More examples: [USAGE.md](docs/USAGE.md)
-* [Complete module documentation](http://ebscopy.readthedocs.org/en/latest/)
+* [~~Complete module documentation~~](http://ebscopy.readthedocs.org/en/latest/)
 
 # Installation
 ```python
