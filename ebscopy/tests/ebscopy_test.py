@@ -142,6 +142,20 @@ class SearchTests(unittest.TestCase):
 
 		sess.end()
 
+	def test_bad_limiters(self):
+		sess								= ebscopy.Session()
+		res									= sess.search("volcano", limiters=["JJ:Y", "XX:Y"])
+
+		self.assertTrue(res)
+
+		# In strict mode, it should raise a ValueError
+		ebscopy._strict						= True
+		with self.assertRaises(ValueError):
+			res_error						= sess.search("earthquake", limiters=["JJ:Y", "XX:Y"])
+		ebscopy._strict						= False
+
+		sess.end()
+
 	def test_dt1_limiter(self):
 		sess								= ebscopy.Session()
 		res_api_date						= sess.search("volcano", limiters=["DT1:2014-01/2014-12"])		# This is the form that API requires

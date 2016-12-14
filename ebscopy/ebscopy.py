@@ -261,6 +261,7 @@ class _Connection:
 		:param string user_id: API user ID
 		:param string passowrd: API password
 		"""
+		self.valid_methods					= frozenset(["CreateSession", "Info", "Search", "Retrieve", "EndSession", "UIDAuth", "SearchCriteria"])
 		self.user_id						= user_id
 		self.password						= password
 		self.userpass						= (self.user_id, self.password)
@@ -301,8 +302,7 @@ class _Connection:
 		:returns: response from API
 		:rtype: dict
 		"""
-		valid_methods						= frozenset(["CreateSession", "Info", "Search", "Retrieve", "EndSession", "UIDAuth", "SearchCriteria"])
-		if method not in valid_methods:
+		if method not in self.valid_methods:
 			raise ValueError("Unknown API method requested!")
 
 		data_json							= json.dumps(data)
@@ -548,8 +548,39 @@ class Session:
 		# TODO: parse some of this out
 		# TODO: catch SessionTimeout here?
 		#	 "ApplicationSettings":{ "SessionTimeout":"480"
-		info_response						= self._request("Info", {})
-		self.info_data						= info_response
+		self.info_data						= self._request("Info", {})
+
+		self.valid_sorts					= set()
+		for sort in self.info_data.get("AvailableSearchCriteria", {}).get("AvailableSorts", []):
+			self.valid_sorts.add(sort.get("Id"))
+
+		self.valid_search_fields			= set()
+		for field in self.info_data.get("AvailableSearchCriteria", {}).get("AvailableSearchFields", []):
+			self.valid_search_fields.add(field.get("FieldCode"))
+
+		self.valid_expanders				= set()
+		for expander in self.info_data.get("AvailableSearchCriteria", {}).get("AvailableExpanders", []):
+			self.valid_expanders.add(expander.get("Id"))
+
+		self.valid_limiters					= set()
+		for limiter in self.info_data.get("AvailableSearchCriteria", {}).get("AvailableLimiters", []):
+			self.valid_limiters.add(limiter.get("Id"))
+
+		self.valid_search_modes				= set()
+		for mode in self.info_data.get("AvailableSearchCriteria", {}).get("AvailableSearchModes", []):
+			self.valid_search_modes.add(mode.get("Mode"))
+
+		self.valid_dym_options				= set()
+		for dym in self.info_data.get("AvailableSearchCriteria", {}).get("AvailableDidYouMeanOptions", []):
+			self.valid_dym_options.add(dym.get("Id"))
+
+		self.session_timeout				= int(self.info_data.get("ApplicationSettings", {}).get("SessionTimeout", "900"))
+		self.max_record_jump				= int(self.info_data.get("ApiSettings", {}).get("MaxRecordJumpAhead", "250"))
+
+
+		# TODO: Do more  here
+
+
 	# End of [__init__] function
 
 	def __repr__(self):
@@ -725,7 +756,14 @@ class Session:
 		:rtype: class:`ebscopy.Results`
 		"""
 
-		valid_expanders						= frozenset(["thesaurus", "fulltext", "relatedsubjects"])
+		if mode not in self.valid_search_modes:
+			if _strict:
+				raise ValueError("Search Mode \"%s\" is not valid!" % (mode))
+			else:
+				logging.warn("Session.search: Ignoring invalid mode \"%s\", using \"all\"!", mode)
+				mode						= "all"
+
+		#valid_expanders						= frozenset(["thesaurus", "fulltext", "relatedsubjects"])
 		expanders_to_check					= []
 		for expander in expanders:
 			expander						= expander.replace("enhancedsubjectprecision", "relatedsubjects")
@@ -733,12 +771,12 @@ class Session:
 				expanders_to_check.append(expander.split(":")[0])
 			else:
 				expanders_to_check.append(expander)
-		expanders_to_use					= list(valid_expanders.intersection(expanders_to_check))
+		expanders_to_use					= list(self.valid_expanders.intersection(expanders_to_check))
 
 		limiters_to_use						= []
 		for limiter in limiters:
 			entry							= {"Id": "", "Values": [""]}
-			append							= True
+			to_append						= True
 
 			if isinstance(limiter, str):
 				entry["Id"], entry["Values"][0]	= limiter.split(":")
@@ -748,14 +786,23 @@ class Session:
 			elif isinstance(limiter, dict) and isinstance(limiter.get("Id"), str) and isinstance(limiter.get("Values"), list):
 				entry						= limiter
 			else:
-				append						= False
+				to_append					= False
+				logging.warn("Session.search: Could not parse limiter \"%s\"!", limiter)
 
-			if append:
+			if to_append:
+				if entry["Id"] not in self.valid_limiters:
+					if _strict:
+						raise ValueError("Limiter ID %s is not in list of available IDs!" % (entry["Id"]))
+					else:
+						logging.warn("Session.search: Ignoring invalid limiter \"%s\"!", entry["Id"])
+						continue
+
 				# Try to fix DT1 format in case it's coming from EDS
 				if entry["Id"] == "DT1":
 					entry					= _change_eds_date_limiter_to_api(entry)
-				limiters_to_use.append(entry)
 
+				limiters_to_use.append(entry)
+			# End of to_append check
 
 		search_data							=	{
 												"SearchCriteria": 		{
@@ -1295,6 +1342,11 @@ class Record:
 # End of Record class
 
 _version = get_distribution('ebscopy').version
+
+# _strict controls the behavior of the ebscopy when dealing with bad input
+# True: Pythonic, throws errors when input is bad
+# False: Forgiving, ignores bad input whenever possible (default)
+_strict										= False
 
 # The shared Connection Pool
 POOL										= ConnectionPool()
