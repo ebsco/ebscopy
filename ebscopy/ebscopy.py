@@ -544,7 +544,7 @@ class Session:
 		else:
 			raise SessionError("No Session Token received from API!")
 
-		# Get Info from API; used by tests
+		# Get Info from API; used by tests and sets some defaults
 		# TODO: parse some of this out
 		# TODO: catch SessionTimeout here?
 		#	 "ApplicationSettings":{ "SessionTimeout":"480"
@@ -569,6 +569,8 @@ class Session:
 		self.valid_search_modes				= set()
 		for mode in self.info_data.get("AvailableSearchCriteria", {}).get("AvailableSearchModes", []):
 			self.valid_search_modes.add(mode.get("Mode"))
+			if mode.get("DefaultOn") == "y":
+				self.default_search_mode	= mode.get("Mode")
 
 		self.valid_dym_options				= set()
 		for dym in self.info_data.get("AvailableSearchCriteria", {}).get("AvailableDidYouMeanOptions", []):
@@ -739,7 +741,7 @@ class Session:
 	# End of [_search] function
 
 	# Do a search
-	def search(self, query, mode="all", sort="relevance", view="brief", rpp=20, page=1, highlight="y", suggest="n", expanders=[], limiters=[]):
+	def search(self, query, mode=None, sort="relevance", view="brief", rpp=20, page=1, highlight="y", suggest="n", expanders=[], limiters=[]):
 		"""
 		Perform a search with the EDS API.
 
@@ -755,6 +757,9 @@ class Session:
 		:returns: Results object
 		:rtype: class:`ebscopy.Results`
 		"""
+
+		if mode == None:
+			mode = self.default_search_mode
 
 		if mode not in self.valid_search_modes:
 			if _strict:

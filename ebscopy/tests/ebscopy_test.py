@@ -134,6 +134,20 @@ class SearchTests(unittest.TestCase):
 		sess.end()
 	# End of [test_basic_search_results] function
 
+	def test_search_modes(self):
+		sess								= ebscopy.Session()
+		res_def								= sess.search("red green")
+		res_any								= sess.search("red green", mode="any")
+		res_bool							= sess.search("red AND green", mode="bool")
+
+		self.assertEqual(sess.default_search_mode, res_def.search_criteria["SearchMode"])
+		self.assertEqual("any", res_any.search_criteria["SearchMode"])
+		self.assertEqual("bool", res_bool.search_criteria["SearchMode"])
+
+
+		sess.end()
+	# End of [test_search_modes] function
+
 	def test_limiter_search_results(self):
 		sess								= ebscopy.Session()
 		res									= sess.search("volcano", limiters=["FT:Y", "RV:Y"])
