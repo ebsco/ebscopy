@@ -13,3 +13,4 @@ v0.1.8, 2016-11-29 -- Fixes DT1 Limter as given by EDS/EBSCOhost
 v0.1.9, 2016-11-29 -- Handles space after colon in DT1 limiter
 v0.1.10, 2016-12-05 -- Open-ended dates are okay for DT1 limiter
 v0.1.11, 2016-12-15 -- Rejects invalid limiters, based on output from INFO API call
+v0.1.12, 2017-03-15 -- Gets default search mode and uses it unless specified
