@@ -1178,8 +1178,9 @@ class Results:
 				for subs in record["RecordInfo"]["BibRecord"]["BibEntity"].get("Subjects", []):
 					subjects.append(subs.get("SubjectFull", None))
 
-				# Get the main, unadorned Title
-				simple_rec["Title"]			= record["RecordInfo"]["BibRecord"]["BibEntity"]["Titles"][0].get("TitleFull")
+				# Get the main, unadorned Title, if it exists
+				if record["RecordInfo"]["BibRecord"]["BibEntity"].get("Titles") and len(record["RecordInfo"]["BibRecord"]["BibEntity"]["Titles"]) > 0:
+					simple_rec["Title"]			= record["RecordInfo"]["BibRecord"]["BibEntity"]["Titles"][0].get("TitleFull")
 
 				# Collect any Authors
 				for contribs in record["RecordInfo"]["BibRecord"].get("BibRelationships", {}).get("HasContributorRelationships", []):
