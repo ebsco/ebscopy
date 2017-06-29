@@ -16,3 +16,4 @@ v0.1.11, 2016-12-15 -- Rejects invalid limiters, based on output from INFO API c
 v0.1.12, 2017-03-15 -- Gets default search mode and uses it unless specified
 v0.1.13, 2017-06-15 -- Handles missing <Titles> in the <BibEntity>
 v0.1.14, 2017-06-29 -- Added PageCount, StartPage, Volume, and Issue to simple records
+v0.1.15, 2017-06-29 -- Fixed PageCount and StartPage

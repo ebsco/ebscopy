@@ -1174,12 +1174,13 @@ class Results:
 				# Collect any Identifiers from the main BibEntity
 				identifiers.extend(record["RecordInfo"]["BibRecord"]["BibEntity"].get("Identifiers", []))
 
-				# Collect any Paginiation info (PageCount and StartPage) from the main BibEntity
+				# Collect any Pagination info (PageCount and StartPage) from the main BibEntity
 				if record["RecordInfo"]["BibRecord"]["BibEntity"].get("PhysicalDescription"):
-					if record["RecordInfo"]["BibRecord"]["BibEntity"]["PhysicalDescription"].get("PageCount"):
-						simple_rec["PageCount"]		= record["RecordInfo"]["BibRecord"]["BibEntity"]["PhysicalDescription"]["PageCount"]
-					if record["RecordInfo"]["BibRecord"]["BibEntity"]["PhysicalDescription"].get("StartPage"):
-						simple_rec["StartPage"]		= record["RecordInfo"]["BibRecord"]["BibEntity"]["PhysicalDescription"]["StartPage"]
+					if record["RecordInfo"]["BibRecord"]["BibEntity"]["PhysicalDescription"].get("Pagination"):
+						if record["RecordInfo"]["BibRecord"]["BibEntity"]["PhysicalDescription"]["Pagination"].get("PageCount"):
+							simple_rec["PageCount"]	= record["RecordInfo"]["BibRecord"]["BibEntity"]["PhysicalDescription"]["Pagination"]["PageCount"]
+						if record["RecordInfo"]["BibRecord"]["BibEntity"]["PhysicalDescription"]["Pagination"].get("StartPage"):
+							simple_rec["StartPage"]	= record["RecordInfo"]["BibRecord"]["BibEntity"]["PhysicalDescription"]["Pagination"]["StartPage"]
 					
 				# Collect any Subjects
 				for subs in record["RecordInfo"]["BibRecord"]["BibEntity"].get("Subjects", []):
