@@ -1173,6 +1173,13 @@ class Results:
 
 				# Collect any Identifiers from the main BibEntity
 				identifiers.extend(record["RecordInfo"]["BibRecord"]["BibEntity"].get("Identifiers", []))
+
+				# Collect any Paginiation info (PageCount and StartPage) from the main BibEntity
+				if record["RecordInfo"]["BibRecord"]["BibEntity"].get("PhysicalDescription"):
+					if record["RecordInfo"]["BibRecord"]["BibEntity"]["PhysicalDescription"].get("PageCount"):
+						simple_rec["PageCount"]		= record["RecordInfo"]["BibRecord"]["BibEntity"]["PhysicalDescription"]["PageCount"]
+					if record["RecordInfo"]["BibRecord"]["BibEntity"]["PhysicalDescription"].get("StartPage"):
+						simple_rec["StartPage"]		= record["RecordInfo"]["BibRecord"]["BibEntity"]["PhysicalDescription"]["StartPage"]
 					
 				# Collect any Subjects
 				for subs in record["RecordInfo"]["BibRecord"]["BibEntity"].get("Subjects", []):
@@ -1198,6 +1205,13 @@ class Results:
 						if ttl["Type"] == "main":
 							simple_rec["Source"]	= ttl["TitleFull"]
 
+				# Collect any Numbering values
+				for num in bib_entity.get("Numbering", []):
+					if num["Type"] == "volume":
+						simple_rec["Volume"]	= num["Value"]
+					elif num["Type"] == "issue": 
+						simple_rec["Issue"]	= num["Value"]
+				
 				# Collect any Date values, regardless of format
 				for dt in bib_entity.get("Dates", []):
 					if dt["Type"] == "published":
