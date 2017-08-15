@@ -306,7 +306,7 @@ class _Connection:
 			raise ValueError("Unknown API method requested!")
 
 		data_json							= json.dumps(data)
-		logging.info("_Connection.request: JSON data being sent: %s", data_json)
+		logging.debug("_Connection.request: JSON data being sent: %s", data_json)
 		base_host							= "https://eds-api.ebscohost.com"
 		base_path							= ""
 		base_url							= ""
@@ -322,7 +322,7 @@ class _Connection:
 			base_path						= "/edsapi/rest/"
 
 		full_url							= base_host + base_path + method
-		logging.info("_Connection.request: Full URL: %s", full_url)
+		logging.debug("_Connection.request: Full URL: %s", full_url)
 
 		headers								= {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
@@ -348,9 +348,8 @@ class _Connection:
 			logging.error("_Connection.request: Request attempt: %s", attempt)
 			logging.error("_Connection.request: Method: %s", method)
 			logging.error("_Connection.request: Code: %s", r.status_code)
-			logging.error("_Connection.request: Request response object: %s", r)
 			logging.error("_Connection.request: Error text: %s", r.text)
-			logging.error("_Connection.request: JSON Object: %s", r.json())
+			#logging.error("_Connection.request: JSON Object: %s", r.json())
 
 			if r.json().get("ErrorNumber"):
 				# ErrorNumbers come in as strings
@@ -711,7 +710,7 @@ class Session:
 			raise ValueError("No search data in search_data!")
 		
 		results								= Results()
-		logging.info("Session.search: Request data: %s", search_data)
+		logging.debug("Session.search: Request data: %s", search_data)
 
 		try:
 			search_response						= self._request("Search", search_data)
@@ -930,7 +929,7 @@ class Session:
 					"EbookPreferredFormat": ebook
 				}
 
-		logging.info("Session.retrieve: Request data: %s", retrieve_data)
+		logging.debug("Session.retrieve: Request data: %s", retrieve_data)
 
 		retrieve_response					= self._request("Retrieve", retrieve_data)
 
