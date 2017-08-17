@@ -363,6 +363,7 @@ class _Connection:
 					logging.warn("_Connection.request: Rerunning original request.")
 					return self.request(method, data, session_token, attempt)
 				elif error_num in ("108", "109"):									# Session Token Missing or Invalid
+					logging.error("_Connection.request: Bad session %s", session_token)
 					raise SessionError("Bad Session!")
 				elif error_num == "144":											# Account/Profile mismatch
 					raise ValueError("Account/Profile mismatch!")
@@ -692,9 +693,12 @@ class Session:
 			#logging.error("Session._request: Whoa, error with retrieving results!")
 			#return
 		except SessionError:
-			logging.warn("Session._request: Problem with Session, trying to start another!")
+			logging.warn("Session._request: Problem with Session (%s), trying to start another!", self.session_token)
 			self.session_token				= self.connection._create_session(self.profile, self.org, self.guest)
-			return self.connection.request(method, data, self.session_token)
+			logging.info("Session._request: Started new Session (%s)!", self.session_token)
+			new_req							= self.connection.request(method, data, self.session_token)
+			logging.info("Session._request: Made new %s request!", method)
+			return new_req
 	# End of [_request] function
 
 	# Internal function for actually calling the API Search 
