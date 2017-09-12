@@ -114,10 +114,34 @@ def _use_or_get(kind, value=""):
 		elif kind == "guest":
 			value							= "n"
 		else:
-			raise ValueError("Could not find value for %s in passed parameters or OS environment (%s)" % (kind, env))
+			raise ValueError("Could not find value for %s in passed parameter or OS environment (%s)" % (kind, env))
 
 	return value
 # End of [_use_or_get] function
+
+def _get_or_use(kind, value=""):
+	"""
+	Get the a value from the appropriate environment variable or return the value passed.
+
+	:param string kind: type of value
+	:param string value: content of value
+	:rtype: string
+	:raises ValueError: when  environemnt variable is not found and value is empty
+	"""
+	kind_env_map							= {
+												"base_host":	"EDS_BASE_HOST",
+											}
+
+	env										= kind_env_map[kind]
+
+	if os.environ.get(env):
+		return os.environ[env]
+	elif value:
+		return value
+	else:
+		raise ValueError("Could not find value for %s in OS environment (%s) or passed parameter" % (kind, env))
+# End of [_get_or_use] function
+
 
 def _uniq(seq):
 	"""
@@ -307,7 +331,10 @@ class _Connection:
 
 		data_json							= json.dumps(data)
 		logging.debug("_Connection.request: JSON data being sent: %s", data_json)
-		base_host							= "https://eds-api.ebscohost.com"
+
+		#base_host							= "https://eds-api-a.ebscohost.com"
+		#base_host							= "https://eds-api.ebscohost.com"
+		base_host							= _get_or_use("base_host", "https://eds-api.ebscohost.com")
 		base_path							= ""
 		base_url							= ""
 		full_url							= ""

@@ -93,6 +93,39 @@ class CreateSessionsWithParameters(unittest.TestCase):
 			sess_1							= ebscopy.Session()
 # End of [CreateSessionsWithParameters] class
 
+class UseDifferentBaseHosts(unittest.TestCase):
+	# We want to strip out the EDS_BASE_HOST environment variable so it doesn't get used
+	def setUp(self):
+		self.environ						= {}
+		if os.environ.get("EDS_BASE_HOST"):
+			self.environ["EDS_BASE_HOST"]		= os.environ["EDS_BASE_HOST"]
+			os.environ["EDS_BASE_HOST"]			= ""
+
+	# Gotta put it back!
+	def tearDown(self):
+		if self.environ.get("EDS_BASE_HOST"):
+			os.environ["EDS_BASE_HOST"]			= self.environ["EDS_BASE_HOST"]
+			self.environ["EDS_BASE_HOST"]		= ""
+		else:
+			os.environ["EDS_BASE_HOST"]			= ""
+
+	def test_default_base_host_works(self):
+		sess								= ebscopy.Session()
+		self.assertIsInstance(sess, ebscopy.Session)
+		info								= sess.info_data
+		self.assertIsNotNone(info)
+		sess.end()
+
+	def test_specified_base_host_works(self):
+		os.environ["EDS_BASE_HOST"]			= "https://eds-api-a.ebscohost.com"
+		sess								= ebscopy.Session()
+		self.assertIsInstance(sess, ebscopy.Session)
+		info								= sess.info_data
+		self.assertIsNotNone(info)
+		sess.end()
+
+# End of [CreateSessionsWithParameters] class
+
 class CreateConnectionFirst(unittest.TestCase):
 	def test_sessions_via_connections(self):
 		#self.assertEqual(len(ebscopy.POOL), 0)										# Pool should start empty
