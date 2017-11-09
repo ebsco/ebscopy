@@ -15,6 +15,21 @@ import dateutil.parser														# Parse text to date
 import re																	# Strip highlighting
 #import warnings																# Allow warnings
 
+## Create logger
+#logger										= logging.getLogger(__name__)
+#logger.setLevel(logging.DEBUG)
+#fh = logging.FileHandler('/tmp/jjj-ebscopy.log')
+#fh.setLevel(logging.DEBUG)
+#formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#fh.setFormatter(formatter)
+#logger.addHandler(fh)
+#
+#logger.debug("Starting ebscopy! (debug)")
+#logger.info("Starting ebscopy! (info)")
+#logger.warn("Starting ebscopy! (warn)")
+#logger.error("Starting ebscopy! (error)")
+#logger.critical("Starting ebscopy! (critical)")
+
 ### Utility Functions
 # TODO: this assumes only one highlight in string; what if more?
 def _parse_highlight(text):
@@ -1392,6 +1407,8 @@ class Record:
 	# End of [print] function
 # End of Record class
 
+
+# Set version
 _version = get_distribution('ebscopy').version
 
 # _strict controls the behavior of the ebscopy when dealing with bad input
