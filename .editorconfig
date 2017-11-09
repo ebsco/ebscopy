@@ -1,0 +1,6 @@
+# EditorConfig for jjj
+root = true
+
+# Force github, in particular, to show 4-space tabs
+[*]
+indent_size = 4
