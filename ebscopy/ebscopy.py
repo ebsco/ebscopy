@@ -1,8 +1,12 @@
 # ebscopy.py
-
+#
+# This is the primary source file for the EBSCO Discovery Service API Python Module
+# 
+# Location of assignment equal sign:
 #											=
+
 # TODO:
-#	be able to use IP
+#	be able to use IP authentication
 #	close on destroy
 
 from pkg_resources import get_distribution									# Automates version setting for autodocs
@@ -14,8 +18,9 @@ from lxml import html														# Strip HTML
 from datetime import date, datetime, timedelta								# Monitor authentication timeout
 import dateutil.parser														# Parse text to date
 import re																	# Strip highlighting
-#import warnings																# Allow warnings
+#import warnings															# Allow warnings
 
+## Work-in-Progress
 ## Create logger
 #logger										= logging.getLogger(__name__)
 #logger.setLevel(logging.DEBUG)
@@ -623,7 +628,7 @@ class Session:
 		self.max_record_jump				= int(self.info_data.get("ApiSettings", {}).get("MaxRecordJumpAhead", "250"))
 
 
-		# TODO: Do more  here
+		# TODO: Do more here
 
 
 	# End of [__init__] function
