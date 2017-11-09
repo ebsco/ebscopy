@@ -1,5 +1,6 @@
 # ebscopy.py
 
+#											=
 # TODO:
 #	be able to use IP
 #	close on destroy
@@ -395,12 +396,12 @@ class _Connection:
 
 			if r.json().get("ErrorNumber"):
 				# ErrorNumbers come in as strings
-				error_num						= r.json()["ErrorNumber"]
+				error_num					= r.json()["ErrorNumber"]
 				logging.error("_Connection.request: ErrorNumber: %s", error_num )
 
 				if error_num in ("104", "107"):										# Authentication Token Invalid or Missing
 					logging.warn("_Connection.request: Bad AuthToken, trying to get another.")
-					self.active					= False
+					self.active				= False
 					self.connect()
 					logging.warn("_Connection.request: Rerunning original request.")
 					return self.request(method, data, session_token, attempt)
@@ -416,7 +417,7 @@ class _Connection:
 
 			elif r.json().get("ErrorCode"):
 				# ErrorCodes come in as integers
-				error_code						= r.json()["ErrorCode"]
+				error_code					= r.json()["ErrorCode"]
 				logging.error("_Connection.request: ErrorCode: %s", error_code )
 
 				if error_code == 1102:												# Invalid Credentials
@@ -582,7 +583,7 @@ class Session:
 
 		self.session_token					= self.connection._create_session(self.profile, self.org, self.guest)
 		if self.session_token:
-			self.active							= True
+			self.active						= True
 		else:
 			raise SessionError("No Session Token received from API!")
 
@@ -691,7 +692,7 @@ class Session:
 		:rtype: class:`ebscopy.Results`
 		"""
 		if isinstance(other, int):
-			new_page					= self.current_page + other
+			new_page						= self.current_page + other
 			return self.get_page(new_page)
 		else:
 			return NotImplemented
@@ -705,7 +706,7 @@ class Session:
 		:rtype: class:`ebscopy.Results`
 		"""
 		if isinstance(other, int):
-			new_page					= max(1, self.current_page - other)
+			new_page						= max(1, self.current_page - other)
 			return self.get_page(new_page)
 		else:
 			return NotImplemented
@@ -759,7 +760,7 @@ class Session:
 		logging.debug("Session.search: Request data: %s", search_data)
 
 		try:
-			search_response						= self._request("Search", search_data)
+			search_response					= self._request("Search", search_data)
 		except RetrievalError as e:
 			logging.warn("Session._search: Unable to retrieve results; Results object will be empty! Error: %s", e)
 			return results
@@ -813,7 +814,7 @@ class Session:
 				logging.warn("Session.search: Ignoring invalid mode \"%s\", using \"all\"!", mode)
 				mode						= "all"
 
-		#valid_expanders						= frozenset(["thesaurus", "fulltext", "relatedsubjects"])
+		#valid_expanders					= frozenset(["thesaurus", "fulltext", "relatedsubjects"])
 		expanders_to_check					= []
 		for expander in expanders:
 			expander						= expander.replace("enhancedsubjectprecision", "relatedsubjects")
@@ -1003,7 +1004,7 @@ class Session:
 		end_response						= self._request("EndSession", end_data)
 
 		if end_response["IsSuccessful"] == "y": 
-			self.active							= False
+			self.active						= False
 		else:
 			logging.warn("Session.end: Unsuccessful! Response: %s", end_response)
 
@@ -1233,7 +1234,7 @@ class Results:
 
 				# Get the main, unadorned Title, if it exists
 				if record["RecordInfo"]["BibRecord"]["BibEntity"].get("Titles") and len(record["RecordInfo"]["BibRecord"]["BibEntity"]["Titles"]) > 0:
-					simple_rec["Title"]			= record["RecordInfo"]["BibRecord"]["BibEntity"]["Titles"][0].get("TitleFull")
+					simple_rec["Title"]		= record["RecordInfo"]["BibRecord"]["BibEntity"]["Titles"][0].get("TitleFull")
 
 				# Collect any Authors
 				for contribs in record["RecordInfo"]["BibRecord"].get("BibRelationships", {}).get("HasContributorRelationships", []):
@@ -1269,11 +1270,11 @@ class Results:
 				
 				# Set "Date" to the best Date value available
 				if simple_rec.get("PubDate"):
-					simple_rec["Date"]	= simple_rec["PubDate"]
+					simple_rec["Date"]		= simple_rec["PubDate"]
 				elif simple_rec.get("CreateDate"):
-					simple_rec["Date"]	= simple_rec["CreateDate"]
+					simple_rec["Date"]		= simple_rec["CreateDate"]
 				elif simple_rec.get("OtherDate"):
-					simple_rec["Date"]	= simple_rec["OtherDate"]
+					simple_rec["Date"]		= simple_rec["OtherDate"]
 
 				# Collect any Identifiers from the IsPartOf BibEntity
 				identifiers.extend(bib_entity.get("Identifiers", []))
