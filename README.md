@@ -41,3 +41,4 @@ pip install ebscopy
 * *Ron Burns* - for letting Dave hire me
 * *Eric Frierson* - for showing me how the API works
 * *Nitin Arora* - for making the case for a Python EDS API wrapper and writing the original PyEDS
+
