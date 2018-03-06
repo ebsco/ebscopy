@@ -627,6 +627,11 @@ class Session:
 		self.session_timeout				= int(self.info_data.get("ApplicationSettings", {}).get("SessionTimeout", "900"))
 		self.max_record_jump				= int(self.info_data.get("ApiSettings", {}).get("MaxRecordJumpAhead", "250"))
 
+		self.include_image_quick_view		= bool()
+		if self.info_data.get("ViewResultSettings", {}).get("IncludeImageQuickView", {}).get("DefaultOn", "n") == "y":
+			self.include_image_quick_view	= True
+			
+
 
 		# TODO: Do more here
 
@@ -792,7 +797,7 @@ class Session:
 	# End of [_search] function
 
 	# Do a search
-	def search(self, query, mode=None, sort="relevance", view="brief", rpp=20, page=1, highlight="y", suggest="n", expanders=[], limiters=[]):
+	def search(self, query, mode=None, sort="relevance", view="brief", rpp=20, page=1, highlight="y", suggest="n", iqv="n", expanders=[], limiters=[]):
 		"""
 		Perform a search with the EDS API.
 
@@ -802,7 +807,8 @@ class Session:
 		:param int rpp: results per page (20)
 		:param int page: page number to return (1)
 		:param string highlight: wrap search terms in <highlight> tags (y* | n)
-		:param string suggest: return search suggestions (y* | n)
+		:param string suggest: return search suggestions (y | n*)
+		:param string iqv: return image quick view results (y | n*)
 		:param list expanders: expanders to apply; each list item can be in the form "fulltext:Y" (string) or "fulltext" (string)
 		:param list limiters: limiters to apply; each list item can be in the form "LA99:English" (string), ["LA99", "English"] (list), or {"Id": "LA99", "Values": ["English", "Spanish"]} (dict)
 		:returns: Results object
@@ -880,6 +886,9 @@ class Session:
 																		},
 												"Actions":				[],
 												}
+
+		if self.include_image_quick_view and iqv == "y":
+			search_data["RetrievalCriteria"]["IncludeImageQuickView"]	= "y"
 
 		if expanders_to_use:
 			search_data["SearchCriteria"]["Expanders"]	= expanders_to_use
