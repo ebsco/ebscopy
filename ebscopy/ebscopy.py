@@ -1205,6 +1205,7 @@ class Results:
 				isbns						= []
 				issns						= []
 				subjects					= []
+				image_quick_views			= []
 
 				# Start loading simple record data
 				simple_rec["ResultId"]		= record["ResultId"]
@@ -1301,6 +1302,10 @@ class Results:
 					elif ident["Type"].startswith("issn"):
 						issns.append(ident["Value"])
 
+				# Collect any ImageQuickView items
+				for item in record.get("ImageQuickViewItems", []):
+					image_quick_views.append(item)
+
 				# Assign previously collected collections
 				subjects					= _uniq(subjects)
 				simple_rec["Subjects"]		= subjects
@@ -1355,6 +1360,7 @@ class Record:
 	Single Record object returned by Retrieve request
 	"""
 	def __init__(self):
+		self.raw							= {}
 		self.dbid							= ""
 		self.an								= ""
 		self.pubtype						= ""
@@ -1363,6 +1369,9 @@ class Record:
 		self.fulltext_avail					= False
 		self.simple_title					= ""
 		self.simple_author					= ""
+		self.is_image_quick_view			= False
+		self.best_image_url					= ""
+		self.images							= []
 	# End of [__init__] function
 
 	def __repr__(self):
@@ -1394,6 +1403,7 @@ class Record:
 
 		:param dict data: Dict containing the API response from a Retrieve request
 		"""
+		self.raw							= data
 		self.dbid							= data["Record"]["Header"]["DbId"]
 		self.an								= data["Record"]["Header"]["An"]
 		self.pubtype						= data["Record"]["Header"]["PubType"]
@@ -1405,6 +1415,20 @@ class Record:
 		self.simple_title					= _get_item_data_by_group(data["Record"]["Items"], "Ti")
 		self.simple_author					= _get_item_data_by_group(data["Record"]["Items"], "Au")
 		self.simple_subject					= _get_item_data_by_group(data["Record"]["Items"], "Su")
+
+		# TODO: Maybe don't even try to get title, author, and subject by group (above) for IQVs?
+		if self.dbid == "iqv":
+			self.is_image_quick_view		= True
+			self.images						= data["Record"].get("IllustrationInfo", {}).get("Images", [])
+
+			# Sort the list of dictionaries by size, based on the order of size_sort list
+			size_sort						= ["orig", "full", "large", "small"]
+			self.images.sort(key=lambda x: size_sort.index(x["Size"]))
+
+			# Populate best_image_url with the url from the first item of the sorted list
+			self.best_image_url				= self.images[0]["Target"]
+		# End of iqv check
+
 		return
 	# End of [load] function
 
