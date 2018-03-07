@@ -1205,7 +1205,7 @@ class Results:
 				isbns						= []
 				issns						= []
 				subjects					= []
-				image_quick_views			= []
+				#image_quick_views			= []
 
 				# Start loading simple record data
 				simple_rec["ResultId"]		= record["ResultId"]
@@ -1302,9 +1302,13 @@ class Results:
 					elif ident["Type"].startswith("issn"):
 						issns.append(ident["Value"])
 
+				simple_rec["ImageQuickViews"]		= []
+				simple_rec["ImageQuickViewThumbs"]	= []
 				# Collect any ImageQuickView items
 				for item in record.get("ImageQuickViewItems", []):
-					image_quick_views.append(item)
+					#image_quick_views.append(item)
+					simple_rec["ImageQuickViews"].append((item["DbId"], item["An"]))
+					simple_rec["ImageQuickViewThumbs"].append(item["Url"])
 
 				# Assign previously collected collections
 				subjects					= _uniq(subjects)
