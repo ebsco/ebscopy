@@ -19,3 +19,4 @@ v0.1.14, 2017-06-29 -- Added PageCount, StartPage, Volume, and Issue to simple r
 v0.1.15, 2017-06-29 -- Fixed PageCount and StartPage
 v0.1.16, 2017-09-12 -- Added ability to set API base hostname from the OS environment
 v0.1.17, 2018-03-07 -- Added basic Instant Quick View functionality (new API feature)
+v0.1.18, 2018-06-26 -- Fixed crash when SearchResults | Data node is empty
