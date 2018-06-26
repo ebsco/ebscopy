@@ -767,7 +767,7 @@ class Session:
 			raise ValueError("No search data in search_data!")
 		
 		results								= Results()
-		logging.debug("Session.search: Request data: %s", search_data)
+		logging.debug("Session._search: Request data: %s", search_data)
 
 		try:
 			search_response					= self._request("Search", search_data)
@@ -775,7 +775,7 @@ class Session:
 			logging.warn("Session._search: Unable to retrieve results; Results object will be empty! Error: %s", e)
 			return results
 
-		logging.debug("Session.search: Response: %s", search_response)
+		logging.debug("Session._search: Response: %s", search_response)
 
 		self.last_search					= search_data
 		self.next_search					= search_data
@@ -789,7 +789,11 @@ class Session:
 		self.next_search["RetrievalCriteria"]["PageNumber"]		= self.current_page
 		
 		if not expect_page or expect_page == self.current_page:
-			results.load(search_response)
+			try:
+				results.load(search_response)
+			except RetrievalError as e:
+				logging.warn("Session._search: Unable to load results; Results object will be partially empty! Error: %s", e)
+				return results
 		else:
 			logging.warn("Session._search: Expected page %s but got page %s; Results object will be empty!" % (expect_page, self.current_page))
 		
@@ -1056,7 +1060,7 @@ class Results:
 	## Internal helper functions
 	# Representation function
 	def __repr__(self):
-		return self.__class__.__name__ + "(queries=%r, hits=%r, page=%r)" % (self.search_queries, self.stat_total_hits, self.page_number)
+		return self.__class__.__name__ + "(queries=%r, hits=%r, page=%r, records=%r)" % (self.search_queries, self.stat_total_hits, self.page_number, len(self.records_raw))
 
 	# Stringify function
 	def __str__(self):
@@ -1195,8 +1199,13 @@ class Results:
 			#TODO: add available criteria. here? or outside the if hits>0?
 	
 			self.rec_format					= data["SearchResult"]["Data"]["RecordFormat"]
-			self.records_raw				= data["SearchResult"]["Data"]["Records"]
-			for record in data["SearchResult"]["Data"]["Records"]:
+
+			if len(data["SearchResult"].get("Data", {}).get("Records", [])) == 0:
+				raise RetrievalError("The 'SearchResult | Data | Records' section is missing or empty in response data!")
+	
+			self.records_raw				= data["SearchResult"].get("Data", {}).get("Records", [])
+
+			for record in data["SearchResult"].get("Data", {}).get("Records", []):
 				# Internal variables with default values
 				simple_rec					= {}
 				has_source					= False
