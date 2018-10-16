@@ -1262,7 +1262,7 @@ class Results:
 
 				# Collect any Authors
 				for contribs in record["RecordInfo"]["BibRecord"].get("BibRelationships", {}).get("HasContributorRelationships", []):
-					if contribs["PersonEntity"]["Name"]["NameFull"]:
+					if contribs.get("PersonEntity", {}).get("Name", {}).get("NameFull"):
 						authors.append(contribs["PersonEntity"]["Name"]["NameFull"]) 
 
 
