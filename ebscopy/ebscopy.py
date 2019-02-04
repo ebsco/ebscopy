@@ -1214,6 +1214,7 @@ class Results:
 				isbns						= []
 				issns						= []
 				subjects					= []
+				all_affiliations			= []
 				#image_quick_views			= []
 
 				# Start loading simple record data
@@ -1239,7 +1240,27 @@ class Results:
 					elif item["Group"] == "Ab" and item["Label"] == "Abstract":
 						simple_rec["AbstractRaw"]	= item["Data"]
 						# Clean up the HTML in the abstract
-						simple_rec["Abstract"]        = html.fromstring(simple_rec["AbstractRaw"]).text_content()
+						simple_rec["Abstract"]		= html.fromstring(simple_rec["AbstractRaw"]).text_content()
+					# Corporate Affiliation
+					elif item["Group"] == "Au" and item["Name"] == "AuthorCorporate":
+						simple_rec["CorpAffiliationRaw"]	= item["Data"]
+						# This is so dirty. The pta database seems to provide these as HTML tags that have been HTML enocoded. Example:
+						# &lt;searchLink fieldCode="ZP" term="%22IZMIR+KATIP+CELEBI+UNIV%22"&gt;IZMIR KATIP CELEBI UNIV&lt;/searchLink&gt;; &lt;searchLink fieldCode="ZP" term="%22MIDDLE+EAST+TECHNICAL+UNIV%22"&gt;MIDDLE EAST TECHNICAL UNIV&lt;/searchLink&gt;
+						simple_rec["CorpAffiliation"]	= html.fromstring(html.fromstring(simple_rec["CorpAffiliationRaw"]).text_content()).text_content()
+						all_affiliations.append(simple_rec["CorpAffiliation"])
+					elif item["Group"] == "AuInfo" and item["Name"] == "AffiliationAuthor":
+						simple_rec["AffiliationAuthorRaw"]	= item["Data"]
+						# These seem to be plain text
+						#simple_rec["AffiliationAuthor"]	= html.fromstring(simple_rec["AffiliationAuthorRaw"]).text_content()
+						simple_rec["AffiliationAuthor"]	= item["Data"]
+						all_affiliations.append(simple_rec["AffiliationAuthor"])
+					elif item["Group"] == "Affil" and item["Name"] == "Affiliation":
+						simple_rec["AffiliationRaw"]	= item["Data"]
+						# These seem to be footnotes in HTML markup
+						simple_rec["Affiliation"]	= html.fromstring(simple_rec["AffiliationRaw"]).text_content()
+						all_affiliations.append(simple_rec["Affiliation"])
+
+				simple_rec["AllAffiliations"]	= all_affiliations
 
 				# Collect any Identifiers from the main BibEntity
 				identifiers.extend(record["RecordInfo"]["BibRecord"]["BibEntity"].get("Identifiers", []))

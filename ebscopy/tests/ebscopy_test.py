@@ -407,5 +407,12 @@ class ImageQuickViewTests(unittest.TestCase):
 
 # End of [ImageQuickViewTests] class
 
+class CorporateAffiliation(unittest.TestCase):
+	def test_corp_affiliation(self):
+		sess								= ebscopy.Session()
+		res									= sess.search("AN 1389141")				# This is the AN for "HYDRAULIC ACTUATOR WITH PRESSURE-BASED PISTON POSITION FEEDBACK" by "MIDDLETON, C M; DEV, B; REEVES, B P; TRIVEDI, D", which has a Corporate Affiliation in the pta database.
+		rec_1								= res.records_simple[1]
+		self.assertIsInstance(rec_1["CorpAffiliation"], str)
+		self.assertGreater(len(rec_1["AllAffiliations"]), 0)
 		
 # EOF

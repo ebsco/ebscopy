@@ -21,3 +21,4 @@ v0.1.16, 2017-09-12 -- Added ability to set API base hostname from the OS enviro
 v0.1.17, 2018-03-07 -- Added basic Instant Quick View functionality (new API feature)
 v0.1.18, 2018-06-26 -- Fixed crash when SearchResults | Data node is empty
 v0.1.19, 2018-10-16 -- Fixed crash when HasContributerRelationships contains an OrganizationEntity
+v0.1.20, 2019-02-04 -- Added functionality to put various Affiliation info in simple_rec
