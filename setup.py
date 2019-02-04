@@ -21,7 +21,7 @@ except:
 # Regular setup data
 setup(
 	name					= 'ebscopy',
-	version					= '0.1.19',
+	version					= '0.1.20',
 	author					= 'Jesse Jensen',
 	author_email			= 'jjensen@ebsco.com',
 	url						= 'https://github.com/jessejensen/ebscopy',
