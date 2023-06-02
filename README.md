@@ -1,5 +1,5 @@
 # ebscopy
-(*/ˈɛbskoʊˌpaɪ/,* not /ˈ*ɛbskɒpiː/*)
+("EBSCO-PY", not "EBS-COPY")
 
 The official Python wrapper for the EBSCO Discovery Service API.
 
