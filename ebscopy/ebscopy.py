@@ -13,8 +13,8 @@ import os																	# Get ENV variables with auth info
 import json																	# Manage data
 from datetime import date, datetime, timedelta								# Monitor authentication timeout
 import re																	# Strip highlighting
-from pkg_resources import get_distribution									# Automates version setting for autodocs
 import logging																# Smart logging
+from importlib.metadata import version										# Automates version setting for autodocs - OM Addition
 from requests import HTTPError, post										# Does the heavy HTTP lifting
 from lxml import html														# Strip HTML
 import dateutil.parser														# Parse text to date
@@ -104,7 +104,8 @@ def _get_item_data_by_name(items, name):
 	
 def _get_item_data_by_group(items, group):
 	"""
-	Check a list of dicts for a dict with a key, ``Group``, that has the value, ``group``, and get the value of the key, ``Data``
+	Check a list of dicts for a dict with a key, ``Group``, that has the value, ``group``, 
+	and get the value of the key, ``Data``
 
 	:param list items: a list of dicts, each of which contains keys, inlcuding ``Data``
 	:param string group: the value of the ``Group`` key to search
@@ -355,7 +356,7 @@ class _Connection:
 		#base_host							= "https://eds-api.ebscohost.com"
 		base_host							= _get_or_use("base_host", "https://eds-api.ebscohost.com")
 		base_path							= ""
-		base_url							= ""
+		#base_url							= "" # OM commented out - 'unused variable'
 		full_url							= ""
 
 		attempt								+= 1
@@ -374,15 +375,15 @@ class _Connection:
 
 		try:
 			headers['x-authenticationToken']	= self.auth_token
-		except:
-			if method is not "UIDAuth":
-				raise ValueError("Missing Authentication Token!")
+		except ValueError as e:
+			if method != "UIDAuth":
+				raise ValueError("Missing Authentication Token!") from e
 
 		try:
 			headers['x-sessionToken']		= session_token
-		except:
+		except ValueError as e:
 			if method not in ("UIDAuth", "CreateSession"):
-				raise ValueError("Missing Session Token!")
+				raise ValueError("Missing Session Token!") from e
 
 		logging.debug("_Connection.request: Request headers: %s", headers)
 
@@ -1381,8 +1382,7 @@ class Results:
 			print("Issn: %s" % record.get("Issn"))
 			print("Abstract: %s" % record.get("Abstract"))
 			print("----------")
-			print
-		print("--------------------")
+			print("--------------------")
 		return
 # End of Results class
 
@@ -1479,7 +1479,8 @@ class Record:
 
 
 # Set version
-_version = get_distribution('ebscopy').version
+_version = version('ebscopy')
+
 
 # _strict controls the behavior of the ebscopy when dealing with bad input
 # True: Pythonic, throws errors when input is bad
