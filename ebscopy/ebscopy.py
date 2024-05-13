@@ -376,7 +376,7 @@ class _Connection:
 		try:
 			headers['x-authenticationToken']	= self.auth_token
 		except ValueError as e:
-			if method != "UIDAuth":
+			if method is not "UIDAuth":
 				raise ValueError("Missing Authentication Token!") from e
 
 		try:
@@ -391,7 +391,7 @@ class _Connection:
 
 		try:
 			r.raise_for_status()
-		except:
+		except ConnectionError as exc:
 			logging.error("_Connection.request: Request attempt: %s", attempt)
 			logging.error("_Connection.request: Method: %s", method)
 			logging.error("_Connection.request: Code: %s", r.status_code)
@@ -411,13 +411,13 @@ class _Connection:
 					return self.request(method, data, session_token, attempt)
 				elif error_num in ("108", "109"):									# Session Token Missing or Invalid
 					logging.error("_Connection.request: Bad session %s", session_token)
-					raise SessionError("Bad Session!")
+					raise SessionError("Bad Session!") from exc
 				elif error_num == "144":											# Account/Profile mismatch
-					raise ValueError("Account/Profile mismatch!")
+					raise ValueError("Account/Profile mismatch!") from exc
 				elif error_num == "138":											# Max Record Retrieval Exceeded
-					raise RetrievalError("Max Record Retrieval Exceeded!")
+					raise RetrievalError("Max Record Retrieval Exceeded!") from exc
 				else:
-					raise HTTPError("Unexpected ErrorNumber from server (%s)!" % error_num)
+					raise HTTPError("Unexpected ErrorNumber from server (%s)!" % error_num) from exc
 
 			elif r.json().get("ErrorCode"):
 				# ErrorCodes come in as integers
@@ -425,13 +425,13 @@ class _Connection:
 				logging.error("_Connection.request: ErrorCode: %s", error_code )
 
 				if error_code == 1102:												# Invalid Credentials
-					raise AuthenticationError("Invalid credentials!")
+					raise AuthenticationError("Invalid credentials!") from exc
 				elif error_code == 1103:											# No Profile
-					raise AuthenticationError("No valid profiles found for customer/group combination.")
+					raise AuthenticationError("No valid profiles found for customer/group combination.") from exc
 				else:
-					raise HTTPError("Unexpected ErrorCode from server (%s)!" % error_code)
+					raise HTTPError("Unexpected ErrorCode from server (%s)!" % error_code) from exc
 			else:
-				raise HTTPError("Completely unexpected error from server!")
+				raise HTTPError("Completely unexpected error from server!") from exc
 	
 		return r.json()
 	# End of [request] function
