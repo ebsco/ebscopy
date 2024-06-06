@@ -14,7 +14,8 @@ import json																	# Manage data
 from datetime import date, datetime, timedelta								# Monitor authentication timeout
 import re																	# Strip highlighting
 import logging																# Smart logging
-from importlib.metadata import version										# Automates version setting for autodocs - work in progress
+#from importlib.metadata import version										# Automates version setting for autodocs - work in progress
+import tomllib																# TOML file parser for package configuration/version setting
 from requests import HTTPError, post										# Does the heavy HTTP lifting
 from lxml import html														# Strip HTML
 import dateutil.parser														# Parse text to date
@@ -298,6 +299,7 @@ class _Connection:
 	"""
 
 	# ConnectionPool should give us safe values when initializing
+	
 	def __init__(self, user_id, password):
 		"""
 		Initialize the _Connection object with user_id and password.
@@ -494,6 +496,17 @@ class _Connection:
 
 		return create_response["SessionToken"]
 	# End of [_create_session] function
+
+	#Parse pyproject.toml file for version
+	def toml_parse(self):
+		"""
+		parse information from pyproject.toml file for versioning information
+		"""
+		with open("pyproject.toml", "rb") as toml:
+			toml_dict = tomllib.load(toml)
+		
+		_version = toml_dict["project"]["version"]
+
 # End of [_Connection] class
 
 class ConnectionPool(Borg):
@@ -1491,14 +1504,13 @@ class Record:
 	# End of [print] function
 # End of Record class
 
-
 # Set version
-_version = version('ebscopy')
-
+#_version = version('ebscopy')
 
 # _strict controls the behavior of the ebscopy when dealing with bad input
 # True: Pythonic, throws errors when input is bad
 # False: Forgiving, ignores bad input whenever possible (default)
+
 _strict										= False
 
 # The shared Connection Pool

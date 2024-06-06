@@ -13,7 +13,7 @@ try:
 	# Pandoc chokes on Unicode characters, which are used in the pronuncation guide
 	ld_md					= re.sub("\(\*.*\*\)", "(*/'ebskOu,pai/*, not */'ebskopi:/*)", ld_md, re.M)
 
-	ld						= pypandoc.convert(ld_md, "rst", format="md")
+	ld						= pypandoc.convert_text(ld_md, "rst", format="md")
 except:
 	ld						= ld_md
 # End of pandoc README translation attempt
