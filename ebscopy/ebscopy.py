@@ -72,7 +72,7 @@ def _parse_highlight(text):
 	output["end_pos"]						= 0
 
 	start_tag								= "&lt;highlight&gt;"
-	end_tag									= "&lt;/highlight&gt;"
+	end_tag									= r"&lt;\/highlight&gt;"
 
 	start_match								= re.search(start_tag, output["orig"])
 	if start_match:
