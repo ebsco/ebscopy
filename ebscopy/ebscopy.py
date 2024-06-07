@@ -39,7 +39,7 @@ import dateutil.parser														# Parse text to date
 ### Utility Functions
 # TODO: this assumes only one highlight in string; what if more?
 
-#Parse pyproject.toml file for version
+#Parse pyproject.toml file for version, and call toml_parse function as _version
 def toml_parse():
 	"""
 	parse information from pyproject.toml file for versioning information
@@ -49,8 +49,9 @@ def toml_parse():
 		
 	version = toml_dict["project"]["version"]
 	return version
-	
+
 _version = toml_parse()
+#end of toml_parse function
 
 def _parse_highlight(text):
 	"""
