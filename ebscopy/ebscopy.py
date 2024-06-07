@@ -487,7 +487,7 @@ class _Connection:
 
 	# Create a Session by hitting the API and returning a session token
 	# The parameters should have been vetted by the Session object that called this
-	def _create_session(self, profile="", org="", guest=""):
+	def create_session(self, profile="", org="", guest=""):
 		"""
 		Create a Session by requesting a Session Token from the API, using passed credentials.
 
@@ -504,10 +504,10 @@ class _Connection:
 											}
 
 		create_response						= self.request("CreateSession", create_data)
-		logging.debug("_Connection._create_session: Response: %s", create_response)
+		logging.debug("_Connection.create_session: Response: %s", create_response)
 
 		return create_response["SessionToken"]
-	# End of [_create_session] function
+	# End of [create_session] function
 # End of [_Connection] class
 
 class ConnectionPool(Borg):
@@ -603,7 +603,7 @@ class Session:
 		self.org							= _use_or_get("org", org)
 		self.guest							= _use_or_get("guest", guest)
 
-		self.session_token					= self.connection._create_session(self.profile, self.org, self.guest)
+		self.session_token					= self.connection.create_session(self.profile, self.org, self.guest)
 		if self.session_token:
 			self.active						= True
 		else:
@@ -764,7 +764,7 @@ class Session:
 			#return
 		except SessionError:
 			logging.warning("Session._request: Problem with Session (%s), trying to start another!", self.session_token)
-			self.session_token				= self.connection._create_session(self.profile, self.org, self.guest)
+			self.session_token				= self.connection.create_session(self.profile, self.org, self.guest)
 			logging.info("Session._request: Started new Session (%s)!", self.session_token)
 			new_req							= self.connection.request(method, data, self.session_token)
 			logging.info("Session._request: Made new %s request!", method)
