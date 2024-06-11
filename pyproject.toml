@@ -9,7 +9,7 @@ version = "2024.06.05"
 description = "Official Python wrapper for the EBSCO Discovery Service (EDS) API"
 readme = "README.md"
 license = "GNUv3"
-requires-python = ">=2.7,!=3.*,"
+requires-python = ">=3.12"
 authors = [
     { name = "Jesse Jensen", email = "jjensen@ebsco.com" },
 ]
