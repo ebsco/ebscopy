@@ -4,11 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ebscopy"
-dynamic = ["version"]
 version = "2024.06.05"
 description = "Official Python wrapper for the EBSCO Discovery Service (EDS) API"
 readme = "README.md"
-license = "GNUv3"
+license = {file = "LICENSE.TXT"}
 requires-python = ">=3.12"
 authors = [
     { name = "Jesse Jensen", email = "jjensen@ebsco.com" },
