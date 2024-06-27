@@ -1,1 +1,4 @@
 .vscode/settings.json
+/.venv
+ebscopy/__pycache__/ebscopy.cpython-312.pyc
+ebscopy/__pycache__/ebscopy.cpython-312.pyc

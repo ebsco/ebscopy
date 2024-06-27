@@ -28,6 +28,8 @@ dependencies = [
     "datetime",
     "logging",
     "requests",
+    "lxml",
+    "python-dateutil"
 ]
 
 [project.urls]
