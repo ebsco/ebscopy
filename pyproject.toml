@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ebscopy"
-version = "2024.06.05"
+version = "2024.06.27"
 description = "Official Python wrapper for the EBSCO Discovery Service (EDS) API"
 readme = "README.md"
 license = {file = "LICENSE.TXT"}
