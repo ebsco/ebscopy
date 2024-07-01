@@ -7,10 +7,10 @@
 # Do we need to test that an implicit connection with bad env variables doesn't work? I don't think so...
 # 
 
-from ebscopy.edsapi import *
+from ebscopy.edsapi import SessionError
 import ebscopy.edsapi as edsapi
 import unittest
-from requests import HTTPError
+#from requests import HTTPError
 import os
 import re
 import time
@@ -359,10 +359,10 @@ class RecordTests(unittest.TestCase):
 		rec_2								= sess.retrieve(res.record[2])
 
 		self.assertIsInstance(rec_0, edsapi.Record)
-		self.assertIsInstance(rec_0.dbid, (unicode, str))
-		self.assertIsInstance(rec_0.an, (unicode, str))
-		self.assertIsInstance(rec_0.plink, (unicode, str))
-		self.assertRegexpMatches(rec_0.plink, "^http://")
+		self.assertIsInstance(rec_0.dbid, (str))
+		self.assertIsInstance(rec_0.an, (str))
+		self.assertIsInstance(rec_0.plink, (str))
+		self.assertRegex(rec_0.plink, "^http://")
 
 		self.assertEqual(rec_0, rec_0)									# Test identity
 		self.assertEqual(rec_1_a, rec_1_b)								# Test two equal objects
