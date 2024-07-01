@@ -2,7 +2,9 @@
 
 import os
 import logging 
-from ebscopy import *
+from ebscopy.edsapi import *
+
+__all__ = ['edsapi']		#refers to 'edsapi.py' file
 
 log_levels									= {
 												'DEBUG':	logging.DEBUG,

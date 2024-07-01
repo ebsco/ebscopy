@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ebscopy"
+version = "2024.06.27"
+description = "Official Python wrapper for the EBSCO Discovery Service (EDS) API"
+readme = "README.md"
+license = {file = "LICENSE.TXT"}
+requires-python = ">=3.12"
+authors = [
+    { name = "Jesse Jensen", email = "jjensen@ebsco.com" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "requests",
+    "lxml",
+    "python-dateutil"
+]
+
+[project.urls]
+Homepage = "https://github.com/jessejensen/ebscopy"
+
+[tool.hatch.version]
+path = "ebscopy/__init__.py"
+
+[tool.hatch.build.targets.wheel.shared-data]
+samples = "ebscopy/samples"
+docs = "ebscopy/docs"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/ebscopy",
+]

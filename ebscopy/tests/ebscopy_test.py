@@ -7,9 +7,10 @@
 # Do we need to test that an implicit connection with bad env variables doesn't work? I don't think so...
 # 
 
-from ebscopy import *
+from ebscopy.edsapi import SessionError
+import ebscopy.edsapi as edsapi
 import unittest
-from requests import HTTPError
+#from requests import HTTPError
 import os
 import re
 import time
@@ -29,16 +30,16 @@ class EnvironmentIsGoodTests(unittest.TestCase):
 # While we're doing it, might as well get some basic two-session stuff out of the way
 class CreateSessionsWithENV(unittest.TestCase):
 	def test_basic_sessions(self):
-		sess_1								= ebscopy.Session()
-		self.assertIsInstance(sess_1, ebscopy.Session)
+		sess_1								= edsapi.Session()
+		self.assertIsInstance(sess_1, edsapi.Session)
 		info_1								= sess_1.info_data
 		self.assertIsNotNone(info_1)
-		sess_2								= ebscopy.Session()
+		sess_2								= edsapi.Session()
 		self.assertEqual(sess_1.connection, sess_2.connection)
 		self.assertNotEqual(sess_1, sess_2)
 		res_1_blue							= sess_1.search("blue")
 		res_2_blue							= sess_2.search("blue")
-		self.assertIsInstance(res_1_blue, ebscopy.Results)
+		self.assertIsInstance(res_1_blue, edsapi.Results)
 		#self.assertEqual(res_1_blue, res_2_blue)
 		self.assertEqual(int(round(len(res_1_blue) - len(res_2_blue), -1)), 0)
 		res_1_green							= sess_1.search("green")
@@ -74,23 +75,23 @@ class CreateSessionsWithParameters(unittest.TestCase):
 		org									= self.environ.get("EDS_ORG")
 		guest								= self.environ.get("EDS_GUEST")
 
-		sess_1								= ebscopy.Session(user_id=user_id, password=password, profile=profile, org=org, guest=guest)
-		self.assertIsInstance(sess_1, ebscopy.Session)
+		sess_1								= edsapi.Session(user_id=user_id, password=password, profile=profile, org=org, guest=guest)
+		self.assertIsInstance(sess_1, edsapi.Session)
 		info_1								= sess_1.info_data
 		sess_1.end()
 		self.assertIsNotNone(info_1)
 
 	def test_bad_explicit_connection_breaks(self):
-		with self.assertRaises(ebscopy.AuthenticationError):
-			sess_1							= ebscopy.Session(user_id="betternotwork", password="betternotwork", profile="betternotwork", org="betternotwork", guest="n")
+		with self.assertRaises(edsapi.AuthenticationError):
+			sess_1							= edsapi.Session(user_id="betternotwork", password="betternotwork", profile="betternotwork", org="betternotwork", guest="n")
 
 	def test_missing_user_explicit_connection_breaks(self):
 		with self.assertRaises(ValueError):
-			sess_1							= ebscopy.Session(user_id="", password="", profile="", org="", guest="n")
+			sess_1							= edsapi.Session(user_id="", password="", profile="", org="", guest="n")
 
 	def test_implict_connection_breaks(self):
 		with self.assertRaises(ValueError):
-			sess_1							= ebscopy.Session()
+			sess_1							= edsapi.Session()
 # End of [CreateSessionsWithParameters] class
 
 class UseDifferentBaseHosts(unittest.TestCase):
@@ -110,16 +111,16 @@ class UseDifferentBaseHosts(unittest.TestCase):
 			os.environ["EDS_BASE_HOST"]			= ""
 
 	def test_default_base_host_works(self):
-		sess								= ebscopy.Session()
-		self.assertIsInstance(sess, ebscopy.Session)
+		sess								= edsapi.Session()
+		self.assertIsInstance(sess, edsapi.Session)
 		info								= sess.info_data
 		self.assertIsNotNone(info)
 		sess.end()
 
 	def test_specified_base_host_works(self):
 		os.environ["EDS_BASE_HOST"]			= "https://eds-api-a.ebscohost.com"
-		sess								= ebscopy.Session()
-		self.assertIsInstance(sess, ebscopy.Session)
+		sess								= edsapi.Session()
+		self.assertIsInstance(sess, edsapi.Session)
 		info								= sess.info_data
 		self.assertIsNotNone(info)
 		sess.end()
@@ -128,18 +129,18 @@ class UseDifferentBaseHosts(unittest.TestCase):
 
 class CreateConnectionFirst(unittest.TestCase):
 	def test_sessions_via_connections(self):
-		#self.assertEqual(len(ebscopy.POOL), 0)										# Pool should start empty
-		conn_a								= ebscopy.POOL.get()					# Can I get a new implicit connection from the pool?
-		self.assertIsInstance(conn_a, ebscopy._Connection)			
-		sess_1								= ebscopy.Session(connection=conn_a)	# Can I make a session with the object?
-		self.assertIsInstance(sess_1, ebscopy.Session)
+		#self.assertEqual(len(edsapi.POOL), 0)										# Pool should start empty
+		conn_a								= edsapi.POOL.get()					# Can I get a new implicit connection from the pool?
+		self.assertIsInstance(conn_a, edsapi._Connection)			
+		sess_1								= edsapi.Session(connection=conn_a)	# Can I make a session with the object?
+		self.assertIsInstance(sess_1, edsapi.Session)
 		info_1								= sess_1.info_data
 		self.assertIsNotNone(info_1)
-		sess_2								= ebscopy.Session(connection=conn_a)	# Can I make another session with the same object?
+		sess_2								= edsapi.Session(connection=conn_a)	# Can I make another session with the same object?
 		self.assertNotEqual(sess_1, sess_2)											# These sessions should be different
-		conn_b								= ebscopy.POOL.get()
-		self.assertIsInstance(conn_b, ebscopy._Connection)
-		self.assertEqual(len(ebscopy.POOL), 1)										# Pool should only have the one _Connection
+		conn_b								= edsapi.POOL.get()
+		self.assertIsInstance(conn_b, edsapi._Connection)
+		self.assertEqual(len(edsapi.POOL), 1)										# Pool should only have the one _Connection
 		self.assertEqual(conn_a, conn_b)											# ConnectionPool should have given the existing _Connection
 		sess_1.end()
 		sess_2.end()
@@ -148,10 +149,10 @@ class CreateConnectionFirst(unittest.TestCase):
 
 class SearchTests(unittest.TestCase):
 	def test_basic_search_results(self):
-		sess								= ebscopy.Session()
+		sess								= edsapi.Session()
 		res_yellow							= sess.search("yellow")
 
-		self.assertIsInstance(res_yellow, ebscopy.Results)
+		self.assertIsInstance(res_yellow, edsapi.Results)
 		self.assertGreater(res_yellow.stat_total_hits, 0)
 		self.assertGreater(res_yellow.stat_total_time, 0)
 		self.assertGreater(len(res_yellow.avail_facets_labels), 0)
@@ -162,13 +163,13 @@ class SearchTests(unittest.TestCase):
 		self.assertGreater(res_yellow, res_yellow_blue)								# Does a one term search have more hits than a two term search?
 
 		rec									= sess.retrieve(res_yellow.record[0])	# Can I retrieve a record from the results list?
-		self.assertIsInstance(rec, ebscopy.Record)
+		self.assertIsInstance(rec, edsapi.Record)
 		
 		sess.end()
 	# End of [test_basic_search_results] function
 
 	def test_search_modes(self):
-		sess								= ebscopy.Session()
+		sess								= edsapi.Session()
 		res_def								= sess.search("red green")
 		res_any								= sess.search("red green", mode="any")
 		res_bool							= sess.search("red AND green", mode="bool")
@@ -182,7 +183,7 @@ class SearchTests(unittest.TestCase):
 	# End of [test_search_modes] function
 
 	def test_limiter_search_results(self):
-		sess								= ebscopy.Session()
+		sess								= edsapi.Session()
 		res									= sess.search("volcano", limiters=["FT:Y", "RV:Y"])
 
 		self.assertTrue(res)
@@ -190,21 +191,21 @@ class SearchTests(unittest.TestCase):
 		sess.end()
 
 	def test_bad_limiters(self):
-		sess								= ebscopy.Session()
+		sess								= edsapi.Session()
 		res									= sess.search("volcano", limiters=["JJ:Y", "XX:Y"])
 
 		self.assertTrue(res)
 
 		# In strict mode, it should raise a ValueError
-		ebscopy._strict						= True
+		edsapi._strict						= True
 		with self.assertRaises(ValueError):
 			res_error						= sess.search("earthquake", limiters=["JJ:Y", "XX:Y"])
-		ebscopy._strict						= False
+		edsapi._strict						= False
 
 		sess.end()
 
 	def test_dt1_limiter(self):
-		sess								= ebscopy.Session()
+		sess								= edsapi.Session()
 		res_api_date						= sess.search("volcano", limiters=["DT1:2014-01/2014-12"])		# This is the form that API requires
 		res_eds_date						= sess.search("volcano", limiters=["DT1:20140101-20141231"])	# This is the form that the EDS interface generates
 
@@ -237,7 +238,7 @@ class SearchTests(unittest.TestCase):
 		sess.end()
 	
 	def test_expander_search_results(self):
-		sess								= ebscopy.Session()
+		sess								= edsapi.Session()
 		res									= sess.search("earthquake", expanders=["fakeexpander:Y", "fulltext:Y"])
 
 		self.assertTrue(res)
@@ -248,7 +249,7 @@ class SearchTests(unittest.TestCase):
 # Somebody must have fixed or removed the record, because this fails now
 #class BadResultTests(unittest.TestCase):
 #	def test_bad_date_value(self):
-#		sess								= ebscopy.Session()
+#		sess								= edsapi.Session()
 #		res									= sess.search("AN uoc.2743836", rpp=5)	# This item has a PubDate "M" value of "19"
 #
 #		self.assertEqual(int(res.records_raw[0]["RecordInfo"]["BibRecord"]["BibRelationships"]["IsPartOfRelationships"][0]["BibEntity"]["Dates"][0]["M"]), 19)
@@ -259,14 +260,14 @@ class SearchTests(unittest.TestCase):
 
 class PageTests(unittest.TestCase):
 	def test_basic_page_movement(self):
-		sess								= ebscopy.Session()
+		sess								= edsapi.Session()
 		res_1								= sess.search("red yellow orange green indigo violet", rpp=5)
 		res_2								= sess.next_page()						# Get the next page of results
 
 		self.assertEqual(sess.current_page, 2)										# Is the session on the next page?
 		self.assertEqual(res_2.page_number, 2)										# Are the results on the next page?
 		self.assertEqual(sess.current_page, res_2.page_number)						# Does the session page match the latest results page? (Technically, this must be true, due to the transitive property of the last two tests)
-		self.assertIsInstance(res_2, ebscopy.Results)								# Is the second page a Results object?
+		self.assertIsInstance(res_2, edsapi.Results)								# Is the second page a Results object?
 		self.assertGreater(res_2.stat_total_hits, 0)								# Are there still more than 0 hits?
 		self.assertNotEqual(res_1, res_2)											# Are the two pages different?
 		self.assertNotEqual(res_1.record[0], res_2.record[0])						# Is the first item of the 1st page different than the first item of the 2nd page?
@@ -282,7 +283,7 @@ class PageTests(unittest.TestCase):
 		sess.end()
 
 	def test_too_many_page_movement(self):
-		sess								= ebscopy.Session()
+		sess								= edsapi.Session()
 
 		res_blue							= sess.search("blue", rpp=100)
 		res_bad								= sess + 5
@@ -308,7 +309,7 @@ class PageTests(unittest.TestCase):
 	#@unittest.expectedFailure														#("This is currently broken by a bug in the API")
 	@unittest.skip("This is currently broken by a bug in the API")
 	def test_basic_long_page_movement(self):
-		sess								= ebscopy.Session()
+		sess								= edsapi.Session()
 
 		for page in range(0, 50):
 			if page == 0:
@@ -328,7 +329,7 @@ class PageTests(unittest.TestCase):
 	#@unittest.expectedFailure														#("This is currently broken by a bug in the API")
 	@unittest.skip("This is currently broken by a bug in the API")
 	def test_facet_long_page_movement(self):
-		sess								= ebscopy.Session()
+		sess								= edsapi.Session()
 
 		for page in range(0, 50):
 			if page == 0:
@@ -349,7 +350,7 @@ class PageTests(unittest.TestCase):
 
 class RecordTests(unittest.TestCase):
 	def test_record_equality(self):
-		sess								= ebscopy.Session()
+		sess								= edsapi.Session()
 		res									= sess.search("orange")
 
 		rec_0								= sess.retrieve(res.record[0])
@@ -357,11 +358,11 @@ class RecordTests(unittest.TestCase):
 		rec_1_b								= sess.retrieve(res.record[1])
 		rec_2								= sess.retrieve(res.record[2])
 
-		self.assertIsInstance(rec_0, ebscopy.Record)
-		self.assertIsInstance(rec_0.dbid, (unicode, str))
-		self.assertIsInstance(rec_0.an, (unicode, str))
-		self.assertIsInstance(rec_0.plink, (unicode, str))
-		self.assertRegexpMatches(rec_0.plink, "^http://")
+		self.assertIsInstance(rec_0, edsapi.Record)
+		self.assertIsInstance(rec_0.dbid, (str))
+		self.assertIsInstance(rec_0.an, (str))
+		self.assertIsInstance(rec_0.plink, (str))
+		self.assertRegex(rec_0.plink, "^http://")
 
 		self.assertEqual(rec_0, rec_0)									# Test identity
 		self.assertEqual(rec_1_a, rec_1_b)								# Test two equal objects
@@ -373,8 +374,8 @@ class RecordTests(unittest.TestCase):
 class TimeoutTests(unittest.TestCase):
 	@unittest.skip("The timeout test takes too long.")
 	def test_auth_timeout(self):
-		conn							= ebscopy.POOL.get()
-		sess							= ebscopy.Session(connection=conn)
+		conn							= edsapi.POOL.get()
+		sess							= edsapi.Session(connection=conn)
 		res_purple						= sess.search("purple")
 
 		timeout_time					= conn.auth_timeout_time
@@ -389,7 +390,7 @@ class TimeoutTests(unittest.TestCase):
 class ImageQuickViewTests(unittest.TestCase):
 	def test_image_quick_view(self):
 		iqv_tup								= ("iqv","31262932")
-		sess								= ebscopy.Session()
+		sess								= edsapi.Session()
 		#res									= sess.search("AN 123730534", iqv="y")	# This is the AN for "Sleepwalking into Catastrophe: COGNITIVE BIASES AND CORPORATE CLIMATE CHANGE INERTIA.", which contains a few IQVs
 		res									= sess.search("AN 103429298", iqv="y")	# This is the AN for "Longitudinal outcomes of Project SEARCH in upstate New York.", which contains a few IQVs
 		rec_image_from_doc					= sess.retrieve(res.record[0])			# This is a request for the first image from the doc
@@ -409,7 +410,7 @@ class ImageQuickViewTests(unittest.TestCase):
 
 class CorporateAffiliation(unittest.TestCase):
 	def test_corp_affiliation(self):
-		sess								= ebscopy.Session()
+		sess								= edsapi.Session()
 		res									= sess.search("AN 1389141")				# This is the AN for "HYDRAULIC ACTUATOR WITH PRESSURE-BASED PISTON POSITION FEEDBACK" by "MIDDLETON, C M; DEV, B; REEVES, B P; TRIVEDI, D", which has a Corporate Affiliation in the pta database.
 		rec_1								= res.records_simple[1]
 		self.assertIsInstance(rec_1["CorpAffiliation"], str)
